@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
-  userId: { type: Number, required: true }, // MySQL user ID
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // MongoDB user ID
   userRole: { type: String },
   title: { type: String, required: true },
   message: { type: String, required: true },

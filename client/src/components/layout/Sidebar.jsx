@@ -2,41 +2,66 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   MdDashboard, MdLocalShipping, MdPeople, MdBarChart,
-  MdNotifications, MdSettings, MdLogout, MdDeliveryDining,
-  MdAssignment, MdReceiptLong, MdSecurity, MdInventory2
+  MdLogout, MdDeliveryDining,
+  MdAssignment, MdReceiptLong, MdSecurity, MdInventory2,
+  MdChevronLeft, MdDirectionsBoat, MdAnchor, MdWarning,
+  MdMenuBook, MdWater, MdLocalGasStation, MdInventory,
+  MdTimeline, MdEngineering, MdExpandMore,
 } from 'react-icons/md';
 
+/* ── nav configs per role ───────────────────────────────────────── */
 const navConfig = {
   admin: [
     { section: 'Main', items: [
-      { to: '/admin', icon: <MdDashboard />, label: 'Dashboard', exact: true },
-      { to: '/admin/shipments', icon: <MdLocalShipping />, label: 'All Shipments' },
-      { to: '/admin/users', icon: <MdPeople />, label: 'User Management' },
+      { to: '/admin',           icon: <MdDashboard />,      label: 'Dashboard',        exact: true },
+      { to: '/admin/shipments', icon: <MdLocalShipping />,  label: 'All Shipments' },
+      { to: '/admin/users',     icon: <MdPeople />,         label: 'User Management' },
     ]},
     { section: 'Analytics', items: [
-      { to: '/admin/reports', icon: <MdBarChart />, label: 'Reports' },
-      { to: '/admin/invoices', icon: <MdReceiptLong />, label: 'Invoices' },
-      { to: '/admin/audit-logs', icon: <MdSecurity />, label: 'Audit Trail' },
+      { to: '/admin/reports',    icon: <MdBarChart />,      label: 'Reports' },
+      { to: '/admin/invoices',   icon: <MdReceiptLong />,   label: 'Invoice Management' },
+      { to: '/admin/audit-logs', icon: <MdSecurity />,      label: 'Audit Trail' },
     ]},
   ],
+
   manager: [
     { section: 'Main', items: [
-      { to: '/manager', icon: <MdDashboard />, label: 'Dashboard', exact: true },
-      { to: '/manager/shipments', icon: <MdLocalShipping />, label: 'Shipments' },
-      { to: '/manager/create-shipment', icon: <MdInventory2 />, label: 'Create Shipment' },
-      { to: '/manager/assign', icon: <MdAssignment />, label: 'Assign Deliveries' },
+      { to: '/manager',                  icon: <MdDashboard />,   label: 'Dashboard',       exact: true },
+      { to: '/manager/shipments',        icon: <MdLocalShipping />,label: 'Shipments' },
+      { to: '/manager/create-shipment',  icon: <MdInventory2 />,  label: 'Create Shipment' },
+      { to: '/manager/assign',           icon: <MdAssignment />,  label: 'Assign Deliveries' },
     ]},
     { section: 'Analytics', items: [
-      { to: '/manager/reports', icon: <MdBarChart />, label: 'Reports' },
+      { to: '/manager/reports',  icon: <MdBarChart />,    label: 'Reports' },
       { to: '/manager/invoices', icon: <MdReceiptLong />, label: 'Invoices' },
     ]},
   ],
+
   staff: [
-    { section: 'Main', items: [
-      { to: '/staff', icon: <MdDashboard />, label: 'Dashboard', exact: true },
-      { to: '/staff/deliveries', icon: <MdDeliveryDining />, label: 'My Deliveries' },
-    ]},
+    {
+      section: '',
+      items: [
+        { to: '/staff',                 icon: <MdDashboard />,       label: 'Dashboard', exact: true },
+        { to: '/staff?tab=ship',        icon: <MdDirectionsBoat />,  label: 'Ship' },
+        { to: '/staff/deliveries',      icon: <MdTimeline />,        label: 'Voyage' },
+        { to: '/staff?tab=alarm',       icon: <MdWarning />,         label: 'Alarm' },
+        { to: '/staff?tab=ods',         icon: <MdMenuBook />,        label: 'ODS Record Book', hasDropdown: true },
+        { to: '/staff?tab=ballast',     icon: <MdWater />,           label: 'Ballast Water Record B...' },
+        { to: '/staff?tab=bunker',      icon: <MdLocalGasStation />, label: 'Bunker Record Book' },
+        { to: '/staff?tab=cargo',       icon: <MdInventory />,       label: 'Cargo Record Book' },
+        { to: '/staff?tab=consumption', icon: <MdBarChart />,        label: 'Consumption Log ...', hasDropdown: true },
+        { to: '/staff?tab=deck',        icon: <MdMenuBook />,        label: 'Deck Log Book' },
+        { to: '/staff?tab=engine',      icon: <MdEngineering />,     label: 'Engine Log Book' },
+      ]
+    }
   ],
+};
+
+/* ── sidebar label per role ─────────────────────────────────────── */
+const PANEL_LABEL = {
+  admin:   'ADMIN PANEL',
+  manager: 'MANAGER PANEL',
+  staff:   'MARIN-STAFF',
 };
 
 export default function Sidebar() {
@@ -44,55 +69,61 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const nav = navConfig[user?.role] || [];
 
-  const initials = user?.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
     <aside className="sidebar">
+      {/* ── Brand ── */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">🚚</div>
         <div className="sidebar-logo-text">
-          <span className="sidebar-logo-title">ShipTrack Pro</span>
-          <span className="sidebar-logo-sub">Codec Technologies</span>
+          <span className="sidebar-logo-title">
+            {PANEL_LABEL[user?.role] || 'ADMIN PANEL'}
+          </span>
         </div>
       </div>
 
+      {/* ── Navigation ── */}
       <nav className="sidebar-nav">
-        {nav.map((section) => (
-          <div key={section.section}>
-            <div className="sidebar-section-label">{section.section}</div>
+        {nav.map((section, idx) => (
+          <div key={section.section || idx}>
+            {section.section && <div className="sidebar-section-label">{section.section}</div>}
             {section.items.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.exact}
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
               >
-                <span className="nav-icon">{item.icon}</span>
-                {item.label}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                  <span className="nav-icon">{item.icon}</span>
+                  <span>{item.label}</span>
+                </div>
+                {item.hasDropdown && (
+                  <span style={{ display: 'flex', alignItems: 'center', marginRight: '4px', opacity: 0.7 }}>
+                    <MdExpandMore size={16} />
+                  </span>
+                )}
               </NavLink>
             ))}
           </div>
         ))}
-      </nav>
 
-      <div className="sidebar-footer">
-        <div className="user-card">
-          <div className="user-avatar">{initials}</div>
-          <div className="user-info">
-            <div className="user-name">{user?.name}</div>
-            <div className="user-role">
-              <span className={`role-badge ${user?.role}`}>{user?.role}</span>
-            </div>
-          </div>
-          <button className="btn btn-ghost btn-icon" onClick={handleLogout} title="Logout" style={{ marginLeft: 'auto' }}>
-            <MdLogout size={18} />
+        {/* Logout */}
+        <div style={{ marginTop: '16px' }}>
+          <div className="sidebar-section-label">Account</div>
+          <button className="nav-item" onClick={handleLogout}>
+            <span className="nav-icon"><MdLogout /></span>
+            Logout
           </button>
         </div>
+      </nav>
+
+      {/* ── Footer collapse hint ── */}
+      <div className="sidebar-footer">
+        <button className="sidebar-collapse-btn" title="Collapse">
+          <MdChevronLeft size={16} />
+        </button>
       </div>
     </aside>
   );

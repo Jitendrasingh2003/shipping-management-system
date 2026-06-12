@@ -102,8 +102,7 @@ const shipmentSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Auto-generate tracking ID
-shipmentSchema.pre('validate', function (next) {
+shipmentSchema.pre('validate', function () {
   if (!this.trackingId) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let id = 'SHP';
@@ -112,7 +111,6 @@ shipmentSchema.pre('validate', function (next) {
     }
     this.trackingId = id;
   }
-  next();
 });
 
 shipmentSchema.index({ status: 1 });

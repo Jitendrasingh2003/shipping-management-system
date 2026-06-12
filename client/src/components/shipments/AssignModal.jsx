@@ -20,7 +20,7 @@ export default function AssignModal({ shipment, onClose, onSuccess }) {
     if (!selectedStaff) return toast.error('Please select a staff member');
     setLoading(true);
     try {
-      await shipmentAPI.assign(shipment._id, { staffId: Number(selectedStaff) });
+      await shipmentAPI.assign(shipment._id, { staffId: selectedStaff });
       toast.success('Shipment assigned successfully! 🚚');
       onSuccess();
     } catch (err) {
@@ -67,34 +67,37 @@ export default function AssignModal({ shipment, onClose, onSuccess }) {
               <div className="alert alert-warning">No active staff members available</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {staffList.map(staff => (
-                  <label key={staff.id} style={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    padding: '12px 14px',
-                    background: selectedStaff == staff.id ? 'var(--accent-primary-glow)' : 'var(--bg-input)',
-                    border: `1px solid ${selectedStaff == staff.id ? 'var(--accent-primary)' : 'var(--border)'}`,
-                    borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.2s',
-                  }}>
-                    <input type="radio" name="staff" value={staff.id} checked={selectedStaff == staff.id} onChange={() => setSelectedStaff(String(staff.id))} style={{ display: 'none' }} />
-                    <div style={{
-                      width: 36, height: 36, borderRadius: '50%',
-                      background: 'linear-gradient(135deg, var(--success), #16a34a)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, fontWeight: 700, color: 'white', flexShrink: 0,
+                {staffList.map(staff => {
+                  const staffId = staff._id || staff.id;
+                  return (
+                    <label key={staffId} style={{
+                      display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: '12px 14px',
+                      background: selectedStaff === staffId ? 'var(--accent-primary-glow)' : 'var(--bg-input)',
+                      border: `1px solid ${selectedStaff === staffId ? 'var(--accent-primary)' : 'var(--border)'}`,
+                      borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.2s',
                     }}>
-                      {staff.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: selectedStaff == staff.id ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
-                        {staff.name}
+                      <input type="radio" name="staff" value={staffId} checked={selectedStaff === staffId} onChange={() => setSelectedStaff(staffId)} style={{ display: 'none' }} />
+                      <div style={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        background: 'linear-gradient(135deg, var(--success), #16a34a)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 13, fontWeight: 700, color: 'white', flexShrink: 0,
+                      }}>
+                        {staff.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                       </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{staff.phone}</div>
-                    </div>
-                    {selectedStaff == staff.id && (
-                      <div style={{ fontSize: '18px' }}>✓</div>
-                    )}
-                  </label>
-                ))}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: selectedStaff === staffId ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                          {staff.name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{staff.phone}</div>
+                      </div>
+                      {selectedStaff === staffId && (
+                        <div style={{ fontSize: '18px' }}>✓</div>
+                      )}
+                    </label>
+                  );
+                })}
               </div>
             )}
           </div>

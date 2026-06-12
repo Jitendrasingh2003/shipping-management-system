@@ -27,7 +27,8 @@ export default function UserManagement() {
 
   const handleToggleActive = async (user) => {
     try {
-      await userAPI.update(user.id, { isActive: !user.isActive });
+      const userId = user._id || user.id;
+      await userAPI.update(userId, { isActive: !user.isActive });
       toast.success(`User ${user.isActive ? 'deactivated' : 'activated'}`);
       fetchUsers();
     } catch { toast.error('Failed to update user'); }
@@ -106,53 +107,56 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
-                <tr key={u.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: '50%',
-                        background: avatarColors[u.role], display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 13, fontWeight: 700, color: 'white', flexShrink: 0,
-                      }}>{initials(u.name)}</div>
-                      <div>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {u.id}</div>
+              {users.map(u => {
+                const userId = u._id || u.id;
+                return (
+                  <tr key={userId}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: 36, height: 36, borderRadius: '50%',
+                          background: avatarColors[u.role], display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 13, fontWeight: 700, color: 'white', flexShrink: 0,
+                        }}>{initials(u.name)}</div>
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {userId}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td style={{ color: 'var(--text-primary)', fontSize: '13px' }}>{u.email}</td>
-                  <td><span className={`role-badge ${u.role}`}>{u.role}</span></td>
-                  <td style={{ fontSize: '13px' }}>{u.phone || '—'}</td>
-                  <td>
-                    <span className={`badge ${u.isActive ? 'badge-delivered' : 'badge-cancelled'}`}>
-                      {u.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                    {u.lastLogin ? format(new Date(u.lastLogin), 'dd MMM yyyy') : 'Never'}
-                  </td>
-                  <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                    {format(new Date(u.createdAt), 'dd MMM yyyy')}
-                  </td>
-                  <td>
-                    <div className="table-actions">
-                      <button className="btn btn-ghost btn-icon" title="Edit" onClick={() => setSelectedUser(u)}>
-                        <MdEdit size={16} />
-                      </button>
-                      <button className="btn btn-ghost btn-icon" title={u.isActive ? 'Deactivate' : 'Activate'}
-                        onClick={() => handleToggleActive(u)}
-                        style={{ color: u.isActive ? 'var(--warning)' : 'var(--success)' }}>
-                        {u.isActive ? <MdBlock size={16} /> : <MdCheckCircle size={16} />}
-                      </button>
-                      <button className="btn btn-ghost btn-icon" title="Delete" onClick={() => handleDelete(u.id)}
-                        style={{ color: 'var(--danger)' }}>
-                        <MdDelete size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td style={{ color: 'var(--text-primary)', fontSize: '13px' }}>{u.email}</td>
+                    <td><span className={`role-badge ${u.role}`}>{u.role}</span></td>
+                    <td style={{ fontSize: '13px' }}>{u.phone || '—'}</td>
+                    <td>
+                      <span className={`badge ${u.isActive ? 'badge-delivered' : 'badge-cancelled'}`}>
+                        {u.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {u.lastLogin ? format(new Date(u.lastLogin), 'dd MMM yyyy') : 'Never'}
+                    </td>
+                    <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {format(new Date(u.createdAt), 'dd MMM yyyy')}
+                    </td>
+                    <td>
+                      <div className="table-actions">
+                        <button className="btn btn-ghost btn-icon" title="Edit" onClick={() => setSelectedUser(u)}>
+                          <MdEdit size={16} />
+                        </button>
+                        <button className="btn btn-ghost btn-icon" title={u.isActive ? 'Deactivate' : 'Activate'}
+                          onClick={() => handleToggleActive(u)}
+                          style={{ color: u.isActive ? 'var(--warning)' : 'var(--success)' }}>
+                          {u.isActive ? <MdBlock size={16} /> : <MdCheckCircle size={16} />}
+                        </button>
+                        <button className="btn btn-ghost btn-icon" title="Delete" onClick={() => handleDelete(userId)}
+                          style={{ color: 'var(--danger)' }}>
+                          <MdDelete size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
