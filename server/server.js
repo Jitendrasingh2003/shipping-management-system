@@ -17,6 +17,10 @@ const shipmentRoutes = require('./routes/shipmentRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const companyRoutes = require('./routes/companyRoutes');
+const bugRoutes = require('./routes/bugRoutes');
+const demoRoutes = require('./routes/demoRoutes');
+const enquiryRoutes = require('./routes/enquiryRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -65,6 +69,10 @@ app.use('/api/shipments', shipmentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/company', companyRoutes);
+app.use('/api/bugs', bugRoutes);
+app.use('/api/demo-requests', demoRoutes);
+app.use('/api/enquiries', enquiryRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

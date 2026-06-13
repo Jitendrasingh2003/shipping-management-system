@@ -84,3 +84,36 @@ export const reportAPI = {
   shipments: (params) => api.get('/reports/shipments', { params, responseType: 'blob' }),
   revenue: (params) => api.get('/reports/revenue', { params, responseType: 'blob' }),
 };
+
+// Company
+export const companyAPI = {
+  get:    ()     => api.get('/company'),
+  update: (data) => api.put('/company', data),
+};
+
+// Bug Reports
+export const bugAPI = {
+  getAll:  (params) => api.get('/bugs', { params }),
+  getStats: ()      => api.get('/bugs/stats'),
+  create:  (data)   => api.post('/bugs', data),
+  update:  (id, data) => api.patch(`/bugs/${id}`, data),
+  delete:  (id)     => api.delete(`/bugs/${id}`),
+};
+
+// Demo Requests
+export const demoAPI = {
+  getAll:  (params) => api.get('/demo-requests', { params }),
+  getStats: ()      => api.get('/demo-requests/stats'),
+  create:  (data)   => api.post('/demo-requests', data),
+  update:  (id, data) => api.patch(`/demo-requests/${id}`, data),
+  delete:  (id)     => api.delete(`/demo-requests/${id}`),
+};
+
+// Enquiries
+export const enquiryAPI = {
+  getAll:  (params) => api.get('/enquiries', { params }),
+  getStats: ()      => api.get('/enquiries/stats'),
+  create:  (data)   => api.post('/enquiries', data),
+  update:  (id, data) => api.patch(`/enquiries/${id}`, data),
+  delete:  (id)     => api.delete(`/enquiries/${id}`),
+};

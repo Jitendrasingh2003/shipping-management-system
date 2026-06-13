@@ -14,6 +14,13 @@ import UserManagement from './pages/admin/UserManagement';
 import Reports from './pages/admin/Reports';
 import AuditLogs from './pages/admin/AuditLogs';
 import Invoices from './pages/admin/Invoices';
+import CompanySettings from './pages/admin/CompanySettings';
+import RoleManagement from './pages/admin/RoleManagement';
+import HRManagement from './pages/admin/HRManagement';
+import AccountFinance from './pages/admin/AccountFinance';
+import BugsReport from './pages/admin/BugsReport';
+import DemoRequests from './pages/admin/DemoRequests';
+import GeneralEnquiry from './pages/admin/GeneralEnquiry';
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/ManagerDashboard';
@@ -57,6 +64,13 @@ function App() {
               <Route path="/admin/reports" element={<Reports />} />
               <Route path="/admin/audit-logs" element={<AuditLogs />} />
               <Route path="/admin/invoices" element={<Invoices />} />
+              <Route path="/admin/company" element={<CompanySettings />} />
+              <Route path="/admin/roles" element={<RoleManagement />} />
+              <Route path="/admin/hr" element={<HRManagement />} />
+              <Route path="/admin/finance" element={<AccountFinance />} />
+              <Route path="/admin/bugs" element={<BugsReport />} />
+              <Route path="/admin/demo-requests" element={<DemoRequests />} />
+              <Route path="/admin/enquiries" element={<GeneralEnquiry />} />
             </Route>
 
             {/* Manager Routes */}

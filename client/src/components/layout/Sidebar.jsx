@@ -7,22 +7,37 @@ import {
   MdChevronLeft, MdDirectionsBoat, MdAnchor, MdWarning,
   MdMenuBook, MdWater, MdLocalGasStation, MdInventory,
   MdTimeline, MdEngineering, MdExpandMore,
+  MdBusiness, MdGroups, MdAccountBalance, MdBugReport,
+  MdCalendarToday, MdMail, MdManageAccounts,
 } from 'react-icons/md';
+
 
 /* ── nav configs per role ───────────────────────────────────────── */
 const navConfig = {
   admin: [
     { section: 'Main', items: [
-      { to: '/admin',           icon: <MdDashboard />,      label: 'Dashboard',        exact: true },
-      { to: '/admin/shipments', icon: <MdLocalShipping />,  label: 'All Shipments' },
-      { to: '/admin/users',     icon: <MdPeople />,         label: 'User Management' },
+      { to: '/admin',              icon: <MdDashboard />,       label: 'Dashboard',       exact: true },
+      { to: '/admin/shipments',    icon: <MdLocalShipping />,   label: 'All Shipments' },
+      { to: '/admin/users',        icon: <MdPeople />,          label: 'User Management' },
+    ]},
+    { section: 'Company', items: [
+      { to: '/admin/company',      icon: <MdBusiness />,        label: 'Company' },
+      { to: '/admin/roles',        icon: <MdSecurity />,        label: 'Role Management' },
+      { to: '/admin/hr',           icon: <MdGroups />,          label: 'HR Management' },
+      { to: '/admin/finance',      icon: <MdAccountBalance />,  label: 'Account & Finance' },
     ]},
     { section: 'Analytics', items: [
-      { to: '/admin/reports',    icon: <MdBarChart />,      label: 'Reports' },
-      { to: '/admin/invoices',   icon: <MdReceiptLong />,   label: 'Invoice Management' },
-      { to: '/admin/audit-logs', icon: <MdSecurity />,      label: 'Audit Trail' },
+      { to: '/admin/reports',      icon: <MdBarChart />,        label: 'Reports' },
+      { to: '/admin/invoices',     icon: <MdReceiptLong />,     label: 'Invoice Management' },
+      { to: '/admin/audit-logs',   icon: <MdManageAccounts />,  label: 'Audit Trail' },
+    ]},
+    { section: 'Support', items: [
+      { to: '/admin/bugs',         icon: <MdBugReport />,       label: 'Bugs & Report' },
+      { to: '/admin/demo-requests',icon: <MdCalendarToday />,   label: 'Demo Requests' },
+      { to: '/admin/enquiries',    icon: <MdMail />,            label: 'General Enquiry' },
     ]},
   ],
+
 
   manager: [
     { section: 'Main', items: [
