@@ -35,10 +35,12 @@ export default api;
 // Auth
 export const authAPI = {
   login: (data) => api.post('/auth/login', data),
+  register: (data) => api.post('/auth/register', data),
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
   changePassword: (data) => api.put('/auth/change-password', data),
 };
+
 
 // Users
 export const userAPI = {
@@ -117,3 +119,95 @@ export const enquiryAPI = {
   update:  (id, data) => api.patch(`/enquiries/${id}`, data),
   delete:  (id)     => api.delete(`/enquiries/${id}`),
 };
+
+// ── MARINE COMPANY APIs ──
+
+// Ships
+export const shipAPI = {
+  getAll:  () => api.get('/ships'),
+  getById: (id) => api.get(`/ships/${id}`),
+  create:  (data) => api.post('/ships', data),
+  update:  (id, data) => api.put(`/ships/${id}`, data),
+  delete:  (id) => api.delete(`/ships/${id}`),
+};
+
+// Crew / Ship Staff
+export const crewAPI = {
+  getAll:  (params) => api.get('/crew', { params }),
+  create:  (data) => api.post('/crew', data),
+  update:  (id, data) => api.put(`/crew/${id}`, data),
+  delete:  (id) => api.delete(`/crew/${id}`),
+};
+
+// Voyages
+export const voyageAPI = {
+  getAll:  (params) => api.get('/voyages', { params }),
+  create:  (data) => api.post('/voyages', data),
+  update:  (id, data) => api.put(`/voyages/${id}`, data),
+  delete:  (id) => api.delete(`/voyages/${id}`),
+};
+
+// Deck Log Book
+export const deckLogAPI = {
+  getAll:  (params) => api.get('/deck-logs', { params }),
+  create:  (data) => api.post('/deck-logs', data),
+  update:  (id, data) => api.put(`/deck-logs/${id}`, data),
+  delete:  (id) => api.delete(`/deck-logs/${id}`),
+};
+
+// Alarms
+export const alarmAPI = {
+  getAll:  (params) => api.get('/alarms', { params }),
+  create:  (data) => api.post('/alarms', data),
+  update:  (id, data) => api.put(`/alarms/${id}`, data),
+  delete:  (id) => api.delete(`/alarms/${id}`),
+};
+
+// ODS Record Book
+export const odsAPI = {
+  getAll:  (params) => api.get('/ods', { params }),
+  create:  (data) => api.post('/ods', data),
+  update:  (id, data) => api.put(`/ods/${id}`, data),
+  delete:  (id) => api.delete(`/ods/${id}`),
+};
+
+// Ballast Water Record Book
+export const ballastAPI = {
+  getAll:  (params) => api.get('/ballast', { params }),
+  create:  (data) => api.post('/ballast', data),
+  update:  (id, data) => api.put(`/ballast/${id}`, data),
+  delete:  (id) => api.delete(`/ballast/${id}`),
+};
+
+// Bunker Record Book
+export const bunkerAPI = {
+  getAll:  (params) => api.get('/bunker', { params }),
+  create:  (data) => api.post('/bunker', data),
+  update:  (id, data) => api.put(`/bunker/${id}`, data),
+  delete:  (id) => api.delete(`/bunker/${id}`),
+};
+
+// Cargo Record Book
+export const cargoAPI = {
+  getAll:  (params) => api.get('/cargo', { params }),
+  create:  (data) => api.post('/cargo', data),
+  update:  (id, data) => api.put(`/cargo/${id}`, data),
+  delete:  (id) => api.delete(`/cargo/${id}`),
+};
+
+// Consumption Log Book
+export const consumptionAPI = {
+  getAll:  (params) => api.get('/consumption', { params }),
+  create:  (data) => api.post('/consumption', data),
+  update:  (id, data) => api.put(`/consumption/${id}`, data),
+  delete:  (id) => api.delete(`/consumption/${id}`),
+};
+
+// Engine Log Book
+export const engineLogAPI = {
+  getAll:  (params) => api.get('/engine-logs', { params }),
+  create:  (data) => api.post('/engine-logs', data),
+  update:  (id, data) => api.put(`/engine-logs/${id}`, data),
+  delete:  (id) => api.delete(`/engine-logs/${id}`),
+};
+

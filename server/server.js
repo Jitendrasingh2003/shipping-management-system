@@ -21,6 +21,17 @@ const companyRoutes = require('./routes/companyRoutes');
 const bugRoutes = require('./routes/bugRoutes');
 const demoRoutes = require('./routes/demoRoutes');
 const enquiryRoutes = require('./routes/enquiryRoutes');
+const shipRoutes = require('./routes/shipRoutes');
+const crewRoutes = require('./routes/crewRoutes');
+const voyageRoutes = require('./routes/voyageRoutes');
+const deckLogRoutes = require('./routes/deckLogRoutes');
+const alarmRoutes = require('./routes/alarmRoutes');
+const odsRoutes = require('./routes/odsRoutes');
+const ballastRoutes = require('./routes/ballastRoutes');
+const bunkerRoutes = require('./routes/bunkerRoutes');
+const cargoRoutes = require('./routes/cargoRoutes');
+const consumptionRoutes = require('./routes/consumptionRoutes');
+const engineRoutes = require('./routes/engineRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -73,6 +84,17 @@ app.use('/api/company', companyRoutes);
 app.use('/api/bugs', bugRoutes);
 app.use('/api/demo-requests', demoRoutes);
 app.use('/api/enquiries', enquiryRoutes);
+app.use('/api/ships', shipRoutes);
+app.use('/api/crew', crewRoutes);
+app.use('/api/voyages', voyageRoutes);
+app.use('/api/deck-logs', deckLogRoutes);
+app.use('/api/alarms', alarmRoutes);
+app.use('/api/ods', odsRoutes);
+app.use('/api/ballast', ballastRoutes);
+app.use('/api/bunker', bunkerRoutes);
+app.use('/api/cargo', cargoRoutes);
+app.use('/api/consumption', consumptionRoutes);
+app.use('/api/engine-logs', engineRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

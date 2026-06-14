@@ -74,45 +74,45 @@ const getDashboardStats = async (req, res, next) => {
       });
 
     } else if (role === 'manager') {
-      const [total, pending, dispatched, inTransit, delivered] = await Promise.all([
-        Shipment.countDocuments({ isArchived: false }),
-        Shipment.countDocuments({ status: { $in: ['created', 'processing'] }, isArchived: false }),
-        Shipment.countDocuments({ status: 'dispatched', isArchived: false }),
-        Shipment.countDocuments({ status: { $in: ['in_transit', 'out_for_delivery', 'picked_up'] }, isArchived: false }),
-        Shipment.countDocuments({ status: 'delivered', isArchived: false }),
+      const Ship = require('../models/mongodb/Ship');
+      const Voyage = require('../models/mongodb/Voyage');
+      const Alarm = require('../models/mongodb/Alarm');
+      const Crew = require('../models/mongodb/Crew');
+
+      const [totalShips, activeVoyages, activeAlarms, totalCrew] = await Promise.all([
+        Ship.countDocuments({ managerId: req.user.id }),
+        Voyage.countDocuments({ managerId: req.user.id, voyageStatus: 'Running' }),
+        Alarm.countDocuments({ managerId: req.user.id, status: 'Active' }),
+        Crew.countDocuments({ managerId: req.user.id }),
       ]);
 
-      const staffList = await User.find({ role: 'staff', isActive: true }).select('id name');
-      const staffWorkload = await Promise.all(staffList.map(async (s) => {
-        const count = await Shipment.countDocuments({ 'assignedTo.userId': s.id, status: { $nin: ['delivered', 'cancelled'] } });
-        return { name: s.name, activeDeliveries: count };
-      }));
-
-      const recentShipments = await Shipment.find({ isArchived: false }).sort({ createdAt: -1 }).limit(5);
-
       res.json({
-        success: true, role: 'manager',
-        stats: { total, pending, dispatched, inTransit, delivered, staffWorkload, recentShipments },
+        success: true,
+        role: 'manager',
+        stats: { totalShips, activeVoyages, activeAlarms, totalCrew },
       });
 
     } else if (role === 'staff') {
-      const [assigned, pickedUp, inTransit, delivered, total] = await Promise.all([
-        Shipment.countDocuments({ 'assignedTo.userId': req.user.id, status: 'dispatched' }),
-        Shipment.countDocuments({ 'assignedTo.userId': req.user.id, status: 'picked_up' }),
-        Shipment.countDocuments({ 'assignedTo.userId': req.user.id, status: { $in: ['in_transit', 'out_for_delivery'] } }),
-        Shipment.countDocuments({ 'assignedTo.userId': req.user.id, status: 'delivered' }),
-        Shipment.countDocuments({ 'assignedTo.userId': req.user.id }),
-      ]);
+      const Crew = require('../models/mongodb/Crew');
+      const Voyage = require('../models/mongodb/Voyage');
+      const DeckLog = require('../models/mongodb/DeckLog');
 
-      const todayDeliveries = await Shipment.find({
-        'assignedTo.userId': req.user.id,
-        status: { $in: ['dispatched', 'picked_up', 'in_transit', 'out_for_delivery'] },
-        isArchived: false,
-      }).sort({ updatedAt: -1 }).limit(10);
+      const crew = await Crew.findOne({ userId: req.user.id }).populate('shipId');
+      let ship = null;
+      let currentVoyage = null;
+      let recentLogs = [];
+
+      if (crew) {
+        ship = crew.shipId;
+        currentVoyage = await Voyage.findOne({ shipId: crew.shipId, voyageStatus: 'Running' })
+          || await Voyage.findOne({ shipId: crew.shipId }).sort({ createdAt: -1 });
+        recentLogs = await DeckLog.find({ shipId: crew.shipId }).sort({ createdAt: -1 }).limit(5);
+      }
 
       res.json({
-        success: true, role: 'staff',
-        stats: { assigned, pickedUp, inTransit, delivered, total, todayDeliveries },
+        success: true,
+        role: 'staff',
+        stats: { crew, ship, currentVoyage, recentLogs },
       });
     }
   } catch (err) {

@@ -1045,3 +1045,1349 @@ body {
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== PORTAL SELECTION PAGE ===== */
+.portal-select-page {
+  min-height: 100vh;
+  background: #0b101d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 40px 20px;
+}
+
+.portal-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.portal-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+}
+.portal-blob-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #dc2626, transparent);
+  top: -150px; left: -100px;
+  animation: blobFloat 8s ease-in-out infinite;
+}
+.portal-blob-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #d97706, transparent);
+  bottom: -100px; right: 10%;
+  animation: blobFloat 10s ease-in-out infinite reverse;
+}
+.portal-blob-3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, #16a34a, transparent);
+  top: 40%; left: 50%;
+  transform: translateX(-50%);
+  animation: blobFloat 12s ease-in-out infinite 2s;
+}
+.portal-grid-lines {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+@keyframes blobFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-30px) scale(1.05); }
+}
+
+.portal-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* Portal Header */
+.portal-header {
+  text-align: center;
+  margin-bottom: 52px;
+}
+
+.portal-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.portal-logo-icon {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, #4f8ef7, #8b5cf6);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  box-shadow: 0 12px 40px rgba(79,142,247,0.35);
+  animation: iconPulse 3s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 12px 40px rgba(79,142,247,0.35); }
+  50% { box-shadow: 0 12px 60px rgba(79,142,247,0.55); }
+}
+
+.portal-main-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 48px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -2px;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+.portal-main-title span { color: #4f8ef7; }
+
+.portal-main-subtitle {
+  font-size: 15px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 8px;
+}
+
+.portal-choose-text {
+  font-size: 14px;
+  color: rgba(255,255,255,0.3);
+  font-style: italic;
+}
+
+/* Portal Cards Grid */
+.portal-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.portal-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  padding: 36px 28px;
+  text-decoration: none;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.4s ease both;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.portal-card:hover {
+  transform: translateY(-8px);
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.15);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+}
+
+.portal-card-glow {
+  position: absolute;
+  top: -60px; left: -60px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  opacity: 0;
+  filter: blur(50px);
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.portal-card:hover .portal-card-glow { opacity: 0.2; }
+
+/* Role Badge */
+.portal-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid;
+  width: fit-content;
+  margin-bottom: 24px;
+  background: rgba(255,255,255,0.05);
+}
+
+/* Card Icon */
+.portal-card-icon {
+  font-size: 52px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+  transition: transform 0.3s ease;
+}
+.portal-card:hover .portal-card-icon { transform: scale(1.1) rotate(5deg); }
+
+.portal-card-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+}
+
+.portal-card-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* Features List */
+.portal-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 28px;
+  flex: 1;
+}
+
+.portal-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 500;
+}
+
+.portal-feature-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* CTA Button */
+.portal-card-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+  transform: translateY(0);
+}
+.portal-card:hover .portal-card-cta {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* Portal Footer */
+.portal-footer {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+}
+
+/* ===== ROLE-SPECIFIC LOGIN PAGES ===== */
+.role-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Admin — dark red theme */
+.admin-login-page { background: linear-gradient(135deg, #0f0505 0%, #1a0808 50%, #0d1117 100%); }
+/* Manager — dark amber theme */
+.manager-login-page { background: linear-gradient(135deg, #0f0c05 0%, #1a1208 50%, #0d1117 100%); }
+/* Staff — dark green theme */
+.staff-login-page { background: linear-gradient(135deg, #030f06 0%, #081a0d 50%, #0d1117 100%); }
+
+.role-login-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.25;
+  animation: blobFloat 8s ease-in-out infinite;
+}
+
+/* Admin blobs */
+.admin-login-page .blob-1 {
+  width: 400px; height: 400px;
+  background: #dc2626;
+  top: -100px; right: -100px;
+}
+.admin-login-page .blob-2 {
+  width: 300px; height: 300px;
+  background: #991b1b;
+  bottom: -80px; left: -80px;
+  animation-delay: -4s;
+}
+
+/* Manager blobs */
+.manager-login-page .blob-1 {
+  width: 400px; height: 400px;
+  background: #d97706;
+  top: -100px; right: -100px;
+}
+.manager-login-page .blob-2 {
+  width: 300px; height: 300px;
+  background: #92400e;
+  bottom: -80px; left: -80px;
+  animation-delay: -4s;
+}
+
+/* Staff blobs */
+.staff-login-page .blob-1 {
+  width: 400px; height: 400px;
+  background: #16a34a;
+  top: -100px; right: -100px;
+}
+.staff-login-page .blob-2 {
+  width: 300px; height: 300px;
+  background: #065f46;
+  bottom: -80px; left: -80px;
+  animation-delay: -4s;
+}
+
+.grid-lines {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Back link */
+.back-to-portal {
+  position: fixed;
+  top: 20px; left: 24px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+  z-index: 10;
+}
+.back-to-portal:hover { color: rgba(255,255,255,0.9); }
+
+/* Role Login Card */
+.role-login-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 28px;
+  padding: 48px;
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+
+/* Role badge inside card */
+.role-login-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin-bottom: 28px;
+}
+.admin-badge { background: rgba(220,38,38,0.15); color: #fca5a5; border: 1px solid rgba(220,38,38,0.3); }
+.manager-badge { background: rgba(217,119,6,0.15); color: #fcd34d; border: 1px solid rgba(217,119,6,0.3); }
+.staff-badge { background: rgba(22,163,74,0.15); color: #86efac; border: 1px solid rgba(22,163,74,0.3); }
+
+/* Role Icon */
+.role-login-logo { text-align: center; margin-bottom: 28px; }
+
+.role-login-icon {
+  width: 68px; height: 68px;
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 16px;
+}
+.admin-icon { background: linear-gradient(135deg, #dc2626, #991b1b); box-shadow: 0 10px 30px rgba(220,38,38,0.4); }
+.manager-icon { background: linear-gradient(135deg, #d97706, #92400e); box-shadow: 0 10px 30px rgba(217,119,6,0.4); }
+.staff-icon { background: linear-gradient(135deg, #16a34a, #065f46); box-shadow: 0 10px 30px rgba(22,163,74,0.4); }
+
+.role-login-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.role-login-subtitle { font-size: 13px; color: rgba(255,255,255,0.4); }
+
+/* Demo cred box */
+.role-demo-cred {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-wrap: wrap;
+}
+.role-demo-cred:hover { background: rgba(255,255,255,0.08); }
+.role-demo-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+.role-demo-email { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 500; }
+.role-demo-pass { font-size: 12px; color: rgba(255,255,255,0.4); font-family: monospace; }
+
+/* Role form inputs */
+.role-input {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: #ffffff !important;
+}
+.role-input::placeholder { color: rgba(255,255,255,0.25) !important; }
+.role-input:focus {
+  border-color: rgba(255,255,255,0.25) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.05) !important;
+}
+
+.form-label { color: rgba(255,255,255,0.7) !important; }
+.input-icon { color: rgba(255,255,255,0.3) !important; }
+
+/* Role-specific override for non-login pages (normal light theme) */
+.app-layout .form-label { color: var(--text-secondary) !important; }
+.app-layout .input-icon { color: var(--text-light) !important; }
+
+/* CTA Login Buttons */
+.role-login-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+}
+.role-login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.admin-login-btn { background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 6px 24px rgba(220,38,38,0.35); }
+.admin-login-btn:hover:not(:disabled) { background: linear-gradient(135deg, #ef4444, #dc2626); transform: translateY(-2px); box-shadow: 0 10px 32px rgba(220,38,38,0.5); }
+
+.manager-login-btn { background: linear-gradient(135deg, #d97706, #b45309); box-shadow: 0 6px 24px rgba(217,119,6,0.35); }
+.manager-login-btn:hover:not(:disabled) { background: linear-gradient(135deg, #f59e0b, #d97706); transform: translateY(-2px); box-shadow: 0 10px 32px rgba(217,119,6,0.5); }
+
+.staff-login-btn { background: linear-gradient(135deg, #16a34a, #15803d); box-shadow: 0 6px 24px rgba(22,163,74,0.35); }
+.staff-login-btn:hover:not(:disabled) { background: linear-gradient(135deg, #22c55e, #16a34a); transform: translateY(-2px); box-shadow: 0 10px 32px rgba(22,163,74,0.5); }
+
+.role-login-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+}
+
+/* ===== RESPONSIVE — PORTAL ===== */
+@media (max-width: 900px) {
+  .portal-cards { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto 48px; }
+  .portal-main-title { font-size: 36px; }
+}
+@media (max-width: 600px) {
+  .role-login-card { padding: 36px 24px; }
+  .portal-main-title { font-size: 28px; }
+}
+
+/* ===========================
+   COMPANY REGISTRATION PAGE
+=========================== */
+.company-reg-page {
+  min-height: 100vh;
+  background: #e8f4f8;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px 60px;
+}
+.company-reg-bg {
+  position: fixed; inset: 0;
+  background:
+    linear-gradient(135deg, rgba(79,142,247,0.08) 0%, transparent 60%),
+    linear-gradient(225deg, rgba(22,163,74,0.06) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+.company-reg-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1000px;
+}
+.company-reg-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.company-reg-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 10px;
+}
+.company-reg-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: #1a1a2e;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: -0.5px;
+}
+.company-reg-form {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 48px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+}
+.company-reg-section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+.company-reg-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.company-reg-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.creg-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 24px 0;
+}
+.creg-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+.req { color: #dc2626; }
+.creg-input {
+  width: 100%;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #fff;
+}
+.creg-input:focus { border-color: #4f8ef7; box-shadow: 0 0 0 3px rgba(79,142,247,0.1); }
+.creg-input::placeholder { color: #aaa; }
+.creg-select { cursor: pointer; }
+.creg-eye-btn {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: #aaa; cursor: pointer; padding: 0;
+}
+.creg-terms {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+.creg-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #dc2626; }
+.creg-terms-label { font-size: 13px; color: #444; cursor: pointer; }
+.creg-terms-link { color: #dc2626; font-weight: 600; cursor: pointer; }
+.creg-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.creg-submit-btn:hover:not(:disabled) { background: #b91c1c; transform: translateY(-1px); }
+.creg-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.creg-login-link {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #666;
+}
+.creg-login-anchor { color: #dc2626; font-weight: 600; text-decoration: none; }
+.creg-login-anchor:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .company-reg-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .company-reg-grid-5 { grid-template-columns: repeat(2, 1fr); }
+  .company-reg-form { padding: 28px 24px; }
+}
+@media (max-width: 540px) {
+  .company-reg-grid-4 { grid-template-columns: 1fr; }
+  .company-reg-grid-5 { grid-template-columns: 1fr; }
+}
+
+/* ===========================
+   COMPANY / MARINE LOGIN PAGE
+=========================== */
+.company-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.company-login-bg {
+  position: absolute; inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80') center/cover no-repeat;
+}
+.company-login-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,30,60,0.55);
+  backdrop-filter: blur(2px);
+}
+.company-login-card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255,255,255,0.92);
+  border-radius: 16px;
+  padding: 40px 44px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.company-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 6px;
+  justify-content: center;
+  text-align: center;
+}
+.company-login-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111;
+  text-align: center;
+  margin-bottom: 28px;
+  font-family: 'Poppins', sans-serif;
+}
+.clabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+.cinput {
+  width: 100%;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 14px;
+  color: #111;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #fff;
+}
+.cinput:focus { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
+.cinput::placeholder { color: #aaa; }
+.ceye-btn {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: #aaa; cursor: pointer;
+}
+.company-login-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0 20px;
+}
+.company-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+}
+.company-checkbox { accent-color: #dc2626; width: 15px; height: 15px; }
+.company-forgot { font-size: 13px; color: #dc2626; font-weight: 600; cursor: pointer; }
+.company-login-btn {
+  width: 100%;
+  padding: 13px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.company-login-btn:hover:not(:disabled) { background: #b91c1c; transform: translateY(-1px); }
+.company-login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.company-signup-link {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: #888;
+}
+.company-signup-anchor { color: #dc2626; font-weight: 600; text-decoration: none; }
+.company-signup-anchor:hover { text-decoration: underline; }
+
+/* ===========================
+   MARINE COMPANY DASHBOARD
+=========================== */
+.marine-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f6fa;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Sidebar */
+.marine-sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: #0f172a;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.3s ease, min-width 0.3s ease;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+.marine-sidebar.collapsed { width: 60px; min-width: 60px; }
+.marine-sidebar::-webkit-scrollbar { width: 4px; }
+.marine-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+/* Sidebar Footer */
+.marine-sidebar-footer {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+.marine-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+  outline: none;
+  transition: background 0.15s, color 0.15s;
+}
+.marine-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.marine-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 56px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+.marine-brand-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.marine-collapse-btn {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.marine-collapse-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+.marine-nav { padding: 8px 0; flex: 1; }
+.marine-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.marine-nav-item:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+.marine-nav-item.active {
+  background: rgba(220,38,38,0.12);
+  border-left-color: #dc2626;
+  color: #fff;
+}
+.marine-nav-icon { font-size: 18px; flex-shrink: 0; display: flex; align-items: center; }
+.marine-nav-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.marine-nav-arrow { font-size: 16px; flex-shrink: 0; }
+.marine-sub-nav { background: rgba(0,0,0,0.15); }
+.marine-sub-item {
+  padding: 7px 16px 7px 44px;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.marine-sub-item:hover { color: #94a3b8; }
+
+/* Main */
+.marine-main {
+  flex: 1;
+  margin-left: 220px;
+  transition: margin-left 0.3s;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.marine-sidebar.collapsed ~ .marine-main { margin-left: 60px; }
+
+/* Topbar */
+.marine-topbar {
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.marine-topbar-left { display: flex; align-items: center; gap: 20px; }
+.marine-mobile-menu {
+  display: none;
+  background: none; border: none; cursor: pointer; color: #444;
+  align-items: center;
+}
+.marine-topbar-info { display: flex; align-items: center; gap: 20px; }
+.marine-topbar-email {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: #555; font-weight: 500;
+}
+.marine-topbar-company {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 13px; color: #555;
+}
+.marine-topbar-right { display: flex; align-items: center; gap: 10px; }
+.marine-topbar-welcome { font-size: 13px; color: #777; }
+.marine-avatar-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: none; cursor: pointer; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: background 0.2s;
+}
+.marine-avatar-btn:hover { background: #dc2626; }
+
+/* Page */
+.marine-page { padding: 28px 28px 60px; flex: 1; }
+
+/* Welcome Banner */
+.marine-welcome-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  border-radius: 14px;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(15,23,42,0.2);
+}
+.marine-welcome-emoji { font-size: 28px; margin-bottom: 4px; }
+.marine-welcome-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.marine-welcome-sub { font-size: 13px; color: rgba(255,255,255,0.55); }
+.marine-welcome-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.marine-admin-badge {
+  background: #dc2626;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 7px 18px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+.marine-date-badge {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 6px;
+}
+
+/* Sections */
+.marine-section { margin-bottom: 32px; }
+.marine-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.marine-section-bar { width: 4px; height: 22px; background: #dc2626; border-radius: 2px; }
+.marine-section-title { font-size: 18px; font-weight: 700; color: #111; }
+
+/* Fleet */
+.marine-fleet-scroll {
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #ddd transparent;
+}
+.marine-fleet-track {
+  display: flex;
+  gap: 20px;
+  width: max-content;
+}
+.marine-ship-card {
+  background: #fff;
+  border-radius: 12px;
+  width: 200px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.marine-ship-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.marine-ship-img-wrap { width: 100%; height: 130px; overflow: hidden; }
+.marine-ship-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+.marine-ship-card:hover .marine-ship-img { transform: scale(1.05); }
+.marine-ship-info { padding: 12px 14px; }
+.marine-ship-name { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 4px; }
+.marine-ship-flag { font-size: 12px; color: #777; }
+
+/* Analytics */
+.marine-analytics-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.marine-analytics-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+.marine-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 140px;
+}
+.marine-filter-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #dc2626;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.marine-filter-select, .marine-filter-input {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #333;
+  font-family: inherit;
+  outline: none;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.marine-filter-select:focus, .marine-filter-input:focus { border-color: #dc2626; }
+.marine-generate-btn {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.marine-generate-btn:hover { background: #b91c1c; }
+.marine-chart-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+
+/* Stats Row */
+.marine-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.marine-stat-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  transition: transform 0.2s;
+}
+.marine-stat-box:hover { transform: translateY(-3px); }
+.marine-stat-emoji { font-size: 28px; margin-bottom: 10px; }
+.marine-stat-num { font-size: 36px; font-weight: 900; letter-spacing: -1px; margin-bottom: 6px; font-family: 'Poppins', sans-serif; }
+.marine-stat-lbl { font-size: 12px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* FAB */
+.marine-fab-group {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 200;
+}
+.marine-fab {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.marine-fab:hover { transform: scale(1.1); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+.marine-fab-chat { background: #fff; color: #333; }
+.marine-fab-add { background: #dc2626; color: #fff; }
+
+/* Mobile overlay */
+.marine-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 99;
+}
+
+@media (max-width: 768px) {
+  .marine-sidebar { transform: translateX(-220px); width: 220px !important; min-width: 220px !important; }
+  .marine-sidebar.mobile-open { transform: translateX(0); }
+  .marine-main { margin-left: 0 !important; }
+  .marine-mobile-menu { display: flex !important; }
+  .marine-stats-row { grid-template-columns: repeat(2, 1fr); }
+  .marine-page { padding: 16px; }
+  .marine-welcome-banner { padding: 20px; }
+  .marine-welcome-title { font-size: 20px; }
+}
+@media (max-width: 480px) {
+  .marine-stats-row { grid-template-columns: 1fr; }
+}
+
+/* ===== MARINE COMPANY CUSTOM STYLES ===== */
+.marine-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.marine-page-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+.marine-btn-red {
+  background: #e8380d;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.marine-btn-red:hover {
+  background: #b91c1c;
+}
+.marine-btn-red:active {
+  transform: scale(0.98);
+}
+.marine-btn-outline {
+  background: transparent;
+  color: #e8380d;
+  border: 1.5px solid #e8380d;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.marine-btn-outline:hover {
+  background: #e8380d;
+  color: #fff;
+}
+.marine-btn-sec {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.marine-btn-sec:hover {
+  background: #e2e8f0;
+}
+
+/* Marine Table styling matching screenshot */
+.marine-table-wrap {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  margin-top: 16px;
+}
+.marine-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.marine-table thead tr {
+  background: #0f2d59; /* Premium dark navy/blue header */
+}
+.marine-table th {
+  padding: 14px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+}
+.marine-table td {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+}
+.marine-table tbody tr:hover {
+  background: #f8fafc;
+}
+.marine-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.marine-no-data {
+  text-align: center;
+  padding: 40px !important;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Status Badges */
+.marine-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* Forms & Selects inside Marine company */
+.marine-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+.marine-label .req {
+  color: #ef4444;
+}
+.marine-input {
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 9px 12px;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.marine-input:focus {
+  border-color: #e8380d;
+}
+.marine-select {
+  cursor: pointer;
+}
+
+/* Modal Overlay & Modal box */
+.marine-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.marine-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  overflow: hidden;
+  animation: slideUp 0.2s ease;
+}
+.marine-modal-lg {
+  max-width: 650px;
+}
+.marine-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.marine-modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+.marine-modal-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.marine-modal-close:hover {
+  color: #475569;
+}
+.marine-modal-body {
+  padding: 20px;
+}
+.marine-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.marine-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
+  margin-top: 16px;
+}

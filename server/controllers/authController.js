@@ -8,6 +8,59 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
 };
 
+// @desc  Register new company (manager account)
+// @route POST /api/auth/register
+// @access Public
+const register = async (req, res, next) => {
+  try {
+    const {
+      name, email, password,
+      companyName, companyEmail, companyAltEmail, companyPhone,
+      country, city, state, zip, officeAddress,
+    } = req.body;
+
+    if (!name || !email || !password || !companyName) {
+      return res.status(400).json({ success: false, message: 'Name, email, password and company name are required.' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    }
+
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = await User.create({
+      name, email,
+      password: hashedPassword,
+      role: 'manager',
+      companyName, companyEmail, companyAltEmail,
+      companyPhone: companyPhone || '',
+      country: country || '',
+      city: city || '',
+      state: state || '',
+      zip: zip || '',
+      officeAddress: officeAddress || '',
+    });
+
+    const token = generateToken(user.id);
+    res.status(201).json({
+      success: true,
+      message: 'Company registered successfully!',
+      token,
+      user: {
+        id: user.id, name: user.name, email: user.email,
+        role: user.role, companyName: user.companyName,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // @desc  Login
 // @route POST /api/auth/login
 // @access Public
@@ -71,13 +124,50 @@ const getMe = async (req, res) => {
 // @access Private
 const updateProfile = async (req, res, next) => {
   try {
-    const { name, phone } = req.body;
+    const {
+      name, phone,
+      companyName, companyEmail, companyAltEmail, companyPhone,
+      country, city, state, zip, officeAddress
+    } = req.body;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
+
+    if (name !== undefined) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+
+    if (user.role === 'manager') {
+      if (companyName !== undefined) user.companyName = companyName;
+      if (companyEmail !== undefined) user.companyEmail = companyEmail;
+      if (companyAltEmail !== undefined) user.companyAltEmail = companyAltEmail;
+      if (companyPhone !== undefined) user.companyPhone = companyPhone;
+      if (country !== undefined) user.country = country;
+      if (city !== undefined) user.city = city;
+      if (state !== undefined) user.state = state;
+      if (zip !== undefined) user.zip = zip;
+      if (officeAddress !== undefined) user.officeAddress = officeAddress;
+    }
+
     await user.save();
-    res.json({ success: true, message: 'Profile updated', user: { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone } });
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        companyName: user.companyName,
+        companyEmail: user.companyEmail,
+        companyAltEmail: user.companyAltEmail,
+        companyPhone: user.companyPhone,
+        country: user.country,
+        city: user.city,
+        state: user.state,
+        zip: user.zip,
+        officeAddress: user.officeAddress,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -101,4 +191,5 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-module.exports = { login, getMe, updateProfile, changePassword };
+module.exports = { register, login, getMe, updateProfile, changePassword };
+

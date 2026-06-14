@@ -9,6 +9,16 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: null },
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date, default: null },
+  // Company fields (for manager/company admin accounts)
+  companyName: { type: String, default: '' },
+  companyEmail: { type: String, default: '' },
+  companyAltEmail: { type: String, default: '' },
+  companyPhone: { type: String, default: '' },
+  country: { type: String, default: '' },
+  city: { type: String, default: '' },
+  state: { type: String, default: '' },
+  zip: { type: String, default: '' },
+  officeAddress: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

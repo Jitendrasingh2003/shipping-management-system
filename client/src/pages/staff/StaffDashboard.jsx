@@ -1,7 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
-import { dashboardAPI } from '../../services/api';
+import {
+  dashboardAPI, deckLogAPI, voyageAPI, alarmAPI, odsAPI,
+  ballastAPI, bunkerAPI, cargoAPI, consumptionAPI, engineLogAPI
+} from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
   MdDashboard, MdDirectionsBoat, MdTimeline, MdWarning,
@@ -12,8 +15,6 @@ import {
 } from 'react-icons/md';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import ShipmentDetailModal from '../../components/shipments/ShipmentDetailModal';
-import StatusUpdateModal from '../../components/shipments/StatusUpdateModal';
 
 export default function StaffDashboard() {
   const { user } = useAuth();
@@ -22,35 +23,17 @@ export default function StaffDashboard() {
 
   const [stats, setStats]     = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedShipment, setSelectedShipment] = useState(null);
-  const [statusShipment, setStatusShipment]     = useState(null);
 
-  // Dummy data for records
-  const [odsEntries, setOdsEntries] = useState([
-    { id: 1, date: '2026-06-10', system: 'Air Conditioning System 1', gasType: 'R-134a', qty: '2.5 kg', operation: 'Recharged', person: 'Chief Officer' },
-    { id: 2, date: '2026-06-05', system: 'Provisions Refrigerator', gasType: 'R-404A', qty: '1.2 kg', operation: 'Leak repaired', person: 'Second Engineer' }
-  ]);
-
-  const [ballastLogs, setBallastLogs] = useState([
-    { id: 1, date: '2026-06-11', tank: '3P Double Bottom', volume: '450 m³', salinity: '32 PSU', status: 'Ballasted', location: 'Arabian Sea' },
-    { id: 2, date: '2026-06-08', tank: 'Aft Peak Tank', volume: '180 m³', salinity: '28 PSU', status: 'De-ballasted', location: 'Port of Mumbai' }
-  ]);
-
-  const [bunkerLogs, setBunkerLogs] = useState([
-    { id: 1, date: '2026-06-09', fuelType: 'VLSFO (Very Low Sulfur Fuel Oil)', qty: '320 MT', viscosity: '380 cSt', sulfur: '0.48%', supplier: 'Marine Fuel Corp' },
-    { id: 2, date: '2026-06-02', fuelType: 'MGO (Marine Gas Oil)', qty: '45 MT', viscosity: '15 cSt', sulfur: '0.08%', supplier: 'Global Bunkering Ltd' }
-  ]);
-
-  const [cargoLogs, setCargoLogs] = useState([
-    { id: 1, date: '2026-06-12', operation: 'Discharging', cargoType: 'Crude Oil', qty: '12,500 bbls', rate: '2,400 bbls/hr', status: 'Completed' },
-    { id: 2, date: '2026-06-11', operation: 'Loading', cargoType: 'MGO Fuel Cargo', qty: '5,000 bbls', rate: '1,500 bbls/hr', status: 'Completed' }
-  ]);
-
-  const [alarmLogs, setAlarmLogs] = useState([
-    { id: 1, time: '10:42 PM', category: 'Machinery', title: 'Jacket Cooling Water High Temp Alarm', status: 'Active', severity: 'high' },
-    { id: 2, time: '08:15 PM', category: 'Navigation', title: 'GPS Signal Integrity Warning', status: 'Resolved', severity: 'warning' },
-    { id: 3, time: '06:30 PM', category: 'Safety', title: 'Bilge Well No. 2 High Level Alarm', status: 'Resolved', severity: 'urgent' }
-  ]);
+  // DB Logbooks States
+  const [deckLogs, setDeckLogs] = useState([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [alarms, setAlarms] = useState([]);
+  const [odsEntries, setOdsEntries] = useState([]);
+  const [ballastLogs, setBallastLogs] = useState([]);
+  const [bunkerLogs, setBunkerLogs] = useState([]);
+  const [cargoLogs, setCargoLogs] = useState([]);
+  const [consumptionLogs, setConsumptionLogs] = useState([]);
+  const [engineLogs, setEngineLogs] = useState([]);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
@@ -63,44 +46,245 @@ export default function StaffDashboard() {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
+  const ship = stats?.ship || null;
+  const crew = stats?.crew || null;
+  const currentVoyage = stats?.currentVoyage || null;
+
+  const loadDeckLogs = async () => {
+    if (!ship) return;
+    setLoadingLogs(true);
+    try {
+      const r = await deckLogAPI.getAll();
+      setDeckLogs(r.data.logs || []);
+    } catch {
+      toast.error('Failed to load deck logs');
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
+  const loadAllLogbooks = async () => {
+    if (!ship) return;
+    alarmAPI.getAll().then(r => setAlarms(r.data.alarms || [])).catch(() => {});
+    odsAPI.getAll().then(r => setOdsEntries(r.data.logs || [])).catch(() => {});
+    ballastAPI.getAll().then(r => setBallastLogs(r.data.logs || [])).catch(() => {});
+    bunkerAPI.getAll().then(r => setBunkerLogs(r.data.logs || [])).catch(() => {});
+    cargoAPI.getAll().then(r => setCargoLogs(r.data.logs || [])).catch(() => {});
+    consumptionAPI.getAll().then(r => setConsumptionLogs(r.data.logs || [])).catch(() => {});
+    engineLogAPI.getAll().then(r => setEngineLogs(r.data.logs || [])).catch(() => {});
+  };
+
+  useEffect(() => {
+    if (ship) {
+      loadDeckLogs();
+      loadAllLogbooks();
+    }
+  }, [ship]);
+
   const today = format(new Date(), 'dd MMM yyyy');
   const greeting = 'Welcome back';
 
-  const activeDeliveries = stats?.todayDeliveries || [];
-  const firstActive = activeDeliveries[0];
+  const handleUpdateVoyageStatus = async (status) => {
+    if (!currentVoyage) return;
+    try {
+      await voyageAPI.update(currentVoyage._id, { voyageStatus: status });
+      toast.success('Voyage status updated to ' + status);
+      fetchStats();
+    } catch {
+      toast.error('Failed to update voyage status');
+    }
+  };
 
-  const handleAddOds = (e) => {
+  const handleTriggerAlarm = async (e) => {
     e.preventDefault();
+    if (!ship) return toast.error('No ship assigned');
     const data = new FormData(e.target);
-    const newEntry = {
-      id: Date.now(),
-      date: data.get('date'),
+    const formVal = {
+      shipId: ship._id,
+      category: data.get('category'),
+      title: data.get('title'),
+      severity: data.get('severity'),
+      status: 'Active',
+      time: format(new Date(), 'HH:mm')
+    };
+    try {
+      await alarmAPI.create(formVal);
+      toast.success('Alarm triggered! 🚨');
+      alarmAPI.getAll().then(r => setAlarms(r.data.alarms || [])).catch(() => {});
+      e.target.reset();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to trigger alarm');
+    }
+  };
+
+  const handleAcknowledgeAlarm = async (alarmId) => {
+    try {
+      await alarmAPI.update(alarmId, { status: 'Resolved' });
+      toast.success('Alarm acknowledged!');
+      alarmAPI.getAll().then(r => setAlarms(r.data.alarms || [])).catch(() => {});
+    } catch {
+      toast.error('Failed to acknowledge alarm');
+    }
+  };
+
+  const handleAddOds = async (e) => {
+    e.preventDefault();
+    if (!ship) return toast.error('No ship assigned');
+    const data = new FormData(e.target);
+    const formVal = {
+      shipId: ship._id,
+      logDate: data.get('date') || new Date().toISOString().slice(0, 10),
       system: data.get('system'),
       gasType: data.get('gasType'),
       qty: data.get('qty') + ' kg',
       operation: data.get('operation'),
-      person: user?.name || 'Chief Officer'
+      loggedBy: user?.name || 'Chief Officer'
     };
-    setOdsEntries([newEntry, ...odsEntries]);
-    toast.success('ODS Record entry logged! 📋');
-    e.target.reset();
+    try {
+      await odsAPI.create(formVal);
+      toast.success('ODS Record entry logged! 📋');
+      odsAPI.getAll().then(r => setOdsEntries(r.data.logs || [])).catch(() => {});
+      e.target.reset();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add ODS entry');
+    }
   };
 
-  const handleAddBallast = (e) => {
+  const handleAddBallast = async (e) => {
     e.preventDefault();
+    if (!ship) return toast.error('No ship assigned');
     const data = new FormData(e.target);
-    const newEntry = {
-      id: Date.now(),
-      date: data.get('date'),
+    const formVal = {
+      shipId: ship._id,
+      logDate: data.get('date') || new Date().toISOString().slice(0, 10),
       tank: data.get('tank'),
       volume: data.get('volume') + ' m³',
       salinity: data.get('salinity') + ' PSU',
       status: data.get('status'),
       location: data.get('location')
     };
-    setBallastLogs([newEntry, ...ballastLogs]);
-    toast.success('Ballast Water operation logged! 🌊');
-    e.target.reset();
+    try {
+      await ballastAPI.create(formVal);
+      toast.success('Ballast Water operation logged! 🌊');
+      ballastAPI.getAll().then(r => setBallastLogs(r.data.logs || [])).catch(() => {});
+      e.target.reset();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add ballast log');
+    }
+  };
+
+  const handleAddBunker = async (e) => {
+    e.preventDefault();
+    if (!ship) return toast.error('No ship assigned');
+    const data = new FormData(e.target);
+    const formVal = {
+      shipId: ship._id,
+      logDate: data.get('date') || new Date().toISOString().slice(0, 10),
+      fuelType: data.get('fuelType'),
+      qty: data.get('qty') + ' MT',
+      viscosity: data.get('viscosity') + ' cSt',
+      sulfur: data.get('sulfur') + '%',
+      supplier: data.get('supplier')
+    };
+    try {
+      await bunkerAPI.create(formVal);
+      toast.success('Bunkering operation logged! ⛽');
+      bunkerAPI.getAll().then(r => setBunkerLogs(r.data.logs || [])).catch(() => {});
+      e.target.reset();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add bunker log');
+    }
+  };
+
+  const handleAddCargo = async (e) => {
+    e.preventDefault();
+    if (!ship) return toast.error('No ship assigned');
+    const data = new FormData(e.target);
+    const formVal = {
+      shipId: ship._id,
+      logDate: data.get('date') || new Date().toISOString().slice(0, 10),
+      operation: data.get('operation'),
+      cargoType: data.get('cargoType'),
+      qty: data.get('qty') + ' MT',
+      rate: data.get('rate') + ' MT/hr',
+      status: 'Completed'
+    };
+    try {
+      await cargoAPI.create(formVal);
+      toast.success('Cargo operation logged! 📦');
+      cargoAPI.getAll().then(r => setCargoLogs(r.data.logs || [])).catch(() => {});
+      e.target.reset();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add cargo log');
+    }
+  };
+
+  const handleAddConsumption = async (e) => {
+    e.preventDefault();
+    if (!ship) return toast.error('No ship assigned');
+    const data = new FormData(e.target);
+    const formVal = {
+      shipId: ship._id,
+      logDate: data.get('date') || new Date().toISOString().slice(0, 10),
+      mainEngineFuel: data.get('mainEngineFuel') + ' MT/day',
+      auxEngineFuel: data.get('auxEngineFuel') + ' MT/day',
+      co2Emissions: data.get('co2Emissions') + ' Tons'
+    };
+    try {
+      await consumptionAPI.create(formVal);
+      toast.success('Fuel consumption logged! 📉');
+      consumptionAPI.getAll().then(r => setConsumptionLogs(r.data.logs || [])).catch(() => {});
+      e.target.reset();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add consumption log');
+    }
+  };
+
+  const handleAddEngineLog = async (e) => {
+    e.preventDefault();
+    if (!ship) return toast.error('No ship assigned');
+    const data = new FormData(e.target);
+    const formVal = {
+      shipId: ship._id,
+      logDate: data.get('date') || new Date().toISOString().slice(0, 10),
+      rpm: data.get('rpm') + ' RPM',
+      jacketTemp: data.get('jacketTemp') + ' °C',
+      lubePressure: data.get('lubePressure') + ' bar',
+      turboRpm: data.get('turboRpm') + ' RPM',
+      scavengeTemp: data.get('scavengeTemp') + ' °C'
+    };
+    try {
+      await engineLogAPI.create(formVal);
+      toast.success('Engine machinery parameters logged! ⚙️');
+      engineLogAPI.getAll().then(r => setEngineLogs(r.data.logs || [])).catch(() => {});
+      e.target.reset();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add engine parameters log');
+    }
+  };
+
+  const handleAddDeckLog = async (e) => {
+    e.preventDefault();
+    if (!ship) return toast.error('No ship assigned to log entries');
+    const data = new FormData(e.target);
+    const formVal = {
+      shipId: ship._id,
+      logDate: data.get('logDate') || new Date().toISOString().slice(0, 10),
+      latitude: data.get('latitude'),
+      longitude: data.get('longitude'),
+      speed: Number(data.get('speed') || 0),
+      course: data.get('course'),
+      weather: data.get('weather'),
+      remarks: data.get('remarks'),
+    };
+    try {
+      await deckLogAPI.create(formVal);
+      toast.success('Deck Log entry logged! 📋');
+      loadDeckLogs();
+      e.target.reset();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add log entry');
+    }
   };
 
   if (loading) return (
@@ -109,26 +293,23 @@ export default function StaffDashboard() {
     </AppLayout>
   );
 
-  // Calculate Voyage stages
   const voyageStages = ['DEPARTURE', 'IN TRANSIT', 'ARRIVAL'];
-  let currentStageIndex = 0; // default DEPARTURE
-  if (firstActive) {
-    if (firstActive.status === 'in_transit' || firstActive.status === 'picked_up' || firstActive.status === 'dispatched') {
+  let currentStageIndex = 0;
+  if (currentVoyage) {
+    if (currentVoyage.voyageStatus === 'Running') {
       currentStageIndex = 1;
-    } else if (firstActive.status === 'out_for_delivery' || firstActive.status === 'delivered') {
+    } else if (currentVoyage.voyageStatus === 'Completed') {
       currentStageIndex = 2;
     }
   }
 
-  // Calculate progress percentage
   const progressPercent = (currentStageIndex / 2) * 100;
 
   return (
     <AppLayout title="Staff Dashboard" subtitle="Marine vessel operations overview">
       
-      {/* ── HEADER BANNER (Dark Navy like MARIN-STAFF) ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f1e36 0%, #061124 100%)',
+        background: 'linear-gradient(135deg, #0f172a 0%, #061124 100%)',
         borderRadius: '16px',
         padding: '24px 32px',
         marginBottom: '28px',
@@ -138,15 +319,15 @@ export default function StaffDashboard() {
         flexWrap: 'wrap',
         gap: '20px',
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        borderLeft: '5px solid #e8380d'
+        borderLeft: '5px solid #ef4444'
       }}>
         <div>
           <h2 style={{
             fontSize: '24px', fontWeight: 800, color: '#ffffff',
             marginBottom: '4px', letterSpacing: '-0.5px',
-            textTransform: 'lowercase', fontFamily: 'system-ui, sans-serif'
+            fontFamily: 'system-ui, sans-serif'
           }}>
-            👋 {greeting}, {user?.name?.toLowerCase() || 'tuesday today'}
+            👋 {greeting}, {user?.name || 'Vessel Crew'}
           </h2>
           <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, fontWeight: 500 }}>
             Here's your ship operations overview for today
@@ -154,11 +335,11 @@ export default function StaffDashboard() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{
-            background: '#e8380d', color: 'white',
+            background: '#ef4444', color: 'white',
             padding: '6px 16px', borderRadius: '20px',
             fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.8px',
           }}>
-            CHIEF OFFICER
+            {crew?.designation || 'OPERATIONS'}
           </div>
           <div style={{
             background: 'rgba(255,255,255,0.06)',
@@ -167,16 +348,13 @@ export default function StaffDashboard() {
             fontWeight: 600, fontSize: '12.5px',
             display: 'flex', alignItems: 'center', gap: '6px',
           }}>
-            <MdCalendarToday size={14} style={{ color: '#e8380d' }} /> {today}
+            <MdCalendarToday size={14} style={{ color: '#ef4444' }} /> {today}
           </div>
         </div>
       </div>
 
-      {/* ── TAB PANELS CONTENT ── */}
       {tab === 'dashboard' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '28px' }}>
-          
-          {/* LEFT: Voyage Status Card */}
           <div style={{
             background: '#ffffff',
             border: '1px solid #e2e8f0',
@@ -192,7 +370,7 @@ export default function StaffDashboard() {
                   Voyage Status
                 </h3>
                 <div style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 700, marginTop: '4px', letterSpacing: '1px' }}>
-                  VOYAGE NO. {firstActive?.trackingId || '23424'}
+                  VOYAGE NO. {currentVoyage?.voyageNo || 'NO ACTIVE VOYAGE'}
                 </div>
               </div>
               <div style={{
@@ -200,16 +378,13 @@ export default function StaffDashboard() {
                 background: '#ecfdf5', color: '#10b981', border: '1px solid #a7f3d0',
                 padding: '6px 14px', borderRadius: '30px', fontSize: '12px', fontWeight: 600,
               }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 2s infinite' }}/>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }}/>
                 Online Sync Active
               </div>
             </div>
 
-            {/* Visual Progress Line */}
             <div style={{ position: 'relative', padding: '0 20px', marginBottom: '40px' }}>
-              {/* Background grey track */}
               <div style={{ height: '4px', background: '#e2e8f0', width: '100%', borderRadius: '4px', position: 'absolute', top: '24px', left: 0, right: 0 }} />
-              {/* Active blue track */}
               <div style={{
                 height: '4px',
                 background: 'linear-gradient(90deg, #3b82f6, #06b6d4)',
@@ -219,20 +394,17 @@ export default function StaffDashboard() {
                 transition: 'width 0.4s ease'
               }} />
 
-              {/* Pins and Labels */}
               <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', zIndex: 2 }}>
                 {voyageStages.map((stage, i) => {
                   const isActive = i <= currentStageIndex;
                   const isCurrent = i === currentStageIndex;
                   return (
                     <div key={stage} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                      {/* Location Pin above the current stage */}
                       <div style={{ height: '24px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                         {isCurrent && (
-                          <span style={{ fontSize: '20px', animation: 'bounce 1s infinite', transformOrigin: 'bottom' }}>📍</span>
+                          <span style={{ fontSize: '20px', transformOrigin: 'bottom' }}>📍</span>
                         )}
                       </div>
-                      {/* Node Circle */}
                       <div style={{
                         width: '18px', height: '18px', borderRadius: '50%',
                         background: isCurrent ? '#ffffff' : isActive ? '#3b82f6' : '#e2e8f0',
@@ -241,7 +413,6 @@ export default function StaffDashboard() {
                         margin: '6px 0 10px',
                         transition: 'all 0.3s'
                       }} />
-                      {/* Stage Label */}
                       <div style={{
                         fontSize: '11px', fontWeight: 700,
                         color: isCurrent ? '#ef4444' : isActive ? '#0f172a' : '#64748b',
@@ -253,9 +424,7 @@ export default function StaffDashboard() {
               </div>
             </div>
 
-            {/* Split Details Section */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: 'auto' }}>
-              {/* Red-accented section */}
               <div style={{
                 borderTop: '3px solid #ef4444',
                 paddingTop: '14px',
@@ -265,23 +434,22 @@ export default function StaffDashboard() {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                   <span style={{ color: '#64748b', fontWeight: 500 }}>🚢 Voyage No</span>
-                  <span style={{ color: '#0f172a', fontWeight: 700 }}>{firstActive?.trackingId || '23424'}</span>
+                  <span style={{ color: '#0f172a', fontWeight: 700 }}>{currentVoyage?.voyageNo || '—'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                   <span style={{ color: '#64748b', fontWeight: 500 }}>Route</span>
                   <span style={{ color: '#0f172a', fontWeight: 700 }}>
-                    {firstActive ? `${firstActive.senderCity} → ${firstActive.receiverCity}` : 'testing → testing'}
+                    {currentVoyage ? `${currentVoyage.departurePort || '—'} → ${currentVoyage.arrivalPort || '—'}` : 'No active voyage'}
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: '#64748b', fontWeight: 500 }}>Status / Stay</span>
+                  <span style={{ color: '#64748b', fontWeight: 500 }}>Status</span>
                   <span style={{ color: '#0f172a', fontWeight: 700 }}>
-                    {firstActive ? firstActive.status?.replace(/_/g,' ').toUpperCase() : 'N/A'}
+                    {currentVoyage ? `${currentVoyage.voyageStatus} / ${currentVoyage.voyageType?.toUpperCase()}` : 'N/A'}
                   </span>
                 </div>
               </div>
 
-              {/* Blue-accented section */}
               <div style={{
                 borderTop: '3px solid #3b82f6',
                 paddingTop: '14px',
@@ -290,36 +458,44 @@ export default function StaffDashboard() {
                 gap: '8px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: '#64748b', fontWeight: 500 }}>📍 Position</span>
-                  <span style={{ color: '#0f172a', fontWeight: 700 }}>
-                    {firstActive?.currentLocation || firstActive?.senderCity || 'testing, testing'}
-                  </span>
+                  <span style={{ color: '#64748b', fontWeight: 500 }}>📍 Departure</span>
+                  <span style={{ color: '#0f172a', fontWeight: 700 }}>{currentVoyage?.departurePort || '—'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: '#64748b', fontWeight: 500 }}>Course (COG)</span>
-                  <span style={{ color: '#0f172a', fontWeight: 700 }}>{firstActive?.weight ? Math.round(firstActive.weight * 5 % 360) : '45'}°</span>
+                  <span style={{ color: '#64748b', fontWeight: 500 }}>📍 Arrival</span>
+                  <span style={{ color: '#0f172a', fontWeight: 700 }}>{currentVoyage?.arrivalPort || '—'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: '#64748b', fontWeight: 500 }}>Speed (SOG)</span>
-                  <span style={{ color: '#0f172a', fontWeight: 700 }}>{firstActive?.weight ? Math.round(firstActive.weight / 10 + 2) : '4'} kts</span>
+                  <span style={{ color: '#64748b', fontWeight: 500 }}>Created</span>
+                  <span style={{ color: '#0f172a', fontWeight: 700 }}>{currentVoyage ? format(new Date(currentVoyage.createdAt), 'dd-MM-yyyy') : '—'}</span>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            {firstActive && (
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
-                <button className="btn btn-primary btn-sm" style={{ background: '#3b82f6' }} onClick={() => setStatusShipment(firstActive)}>
-                  <MdUpdate size={15} /> Update Status
-                </button>
-                <button className="btn btn-secondary btn-sm" onClick={() => setSelectedShipment(firstActive)}>
-                  <MdCamera size={15} /> View Proof / Details
-                </button>
+            {currentVoyage && (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '16px', alignItems: 'center' }}>
+                <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#475569' }}>Change Status:</span>
+                {['Planned', 'Running', 'Completed'].map(status => (
+                  <button
+                    key={status}
+                    className={`btn btn-sm`}
+                    style={{
+                      background: currentVoyage.voyageStatus === status ? '#ef4444' : 'white',
+                      color: currentVoyage.voyageStatus === status ? 'white' : '#475569',
+                      border: '1px solid #cbd5e1',
+                      padding: '4px 10px',
+                      fontSize: '11.5px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => handleUpdateVoyageStatus(status)}
+                  >
+                    {status}
+                  </button>
+                ))}
               </div>
             )}
           </div>
 
-          {/* RIGHT: Ship Details Card */}
           <div style={{
             background: '#ffffff',
             border: '1px solid #e2e8f0',
@@ -332,49 +508,10 @@ export default function StaffDashboard() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ color: '#ef4444', fontSize: '22px', display: 'flex', alignItems: 'center' }}><MdDirectionsBoat /></span>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>i4 ship</h3>
-              </div>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '4px',
-                background: '#ecfdf5', color: '#10b981',
-                padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700,
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} />
-                Active
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>{ship?.name || 'No Ship'}</h3>
               </div>
             </div>
 
-            {/* Attributes List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-              {[
-                { icon: <MdFlagStyle />, label: 'Flag', value: 'India' },
-                { icon: <MdEngineering />, label: 'Type', value: 'Oil Tanker' },
-                { icon: <MdAnchor />, label: 'Class', value: 'CCS' },
-                { icon: <MdInventory />, label: 'Deadweight', value: '100 Tons' },
-                { icon: <MdSpeed />, label: 'Max Draft', value: '222 m' },
-              ].map((row, idx) => (
-                <div key={idx} style={{
-                  display: 'flex', alignItems: 'center', justifySelf: 'stretch',
-                  padding: '10px 12px',
-                  background: '#f8fafc',
-                  borderRadius: '10px',
-                  border: '1px solid #f1f5f9'
-                }}>
-                  <div style={{
-                    width: '32px', height: '32px', borderRadius: '8px',
-                    background: '#eff6ff', color: '#3b82f6',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '16px', marginRight: '12px', flexShrink: 0
-                  }}>
-                    {row.icon}
-                  </div>
-                  <div style={{ flex: 1, fontSize: '13px', color: '#64748b', fontWeight: 500 }}>{row.label}</div>
-                  <div style={{ fontSize: '13px', color: '#0f172a', fontWeight: 700 }}>{row.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Interactive Live Map Radar Mockup */}
             <div style={{
               background: '#0f172a',
               borderRadius: '12px',
@@ -386,12 +523,10 @@ export default function StaffDashboard() {
               justifyContent: 'center',
               boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
             }}>
-              {/* Radar Rings */}
               <div style={{ position: 'absolute', width: '220px', height: '220px', borderRadius: '50%', border: '1px solid rgba(16, 185, 129, 0.15)' }} />
               <div style={{ position: 'absolute', width: '150px', height: '150px', borderRadius: '50%', border: '1px solid rgba(16, 185, 129, 0.25)' }} />
               <div style={{ position: 'absolute', width: '80px', height: '80px', borderRadius: '50%', border: '1px solid rgba(16, 185, 129, 0.35)' }} />
               
-              {/* Radar Sweeper Sweep */}
               <div className="radar-sweep" style={{
                 position: 'absolute', width: '100%', height: '100%',
                 background: 'conic-gradient(from 0deg at 50% 50%, rgba(16, 185, 129, 0.15) 0deg, transparent 90deg)',
@@ -399,21 +534,18 @@ export default function StaffDashboard() {
                 transformOrigin: 'center'
               }} />
 
-              {/* Pulsing Target Dot */}
               <div style={{
                 position: 'absolute', top: '45%', left: '55%',
                 width: '10px', height: '10px', borderRadius: '50%',
                 background: '#ef4444', boxShadow: '0 0 10px #ef4444',
-                animation: 'pulse 1.5s infinite'
               }} />
 
-              {/* Radar Text */}
               <div style={{
                 position: 'absolute', bottom: '8px', left: '12px',
                 fontSize: '9px', fontFamily: 'monospace', color: '#10b981',
                 textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600
               }}>
-                🛰️ Live GPS Map Track
+                🛰️ Live GPS Tracking
               </div>
               <div style={{
                 position: 'absolute', top: '8px', right: '12px',
@@ -423,100 +555,81 @@ export default function StaffDashboard() {
                 Speed: 4.0 KTS
               </div>
             </div>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* ── SHIP TAB ── */}
-      {tab === 'ship' && (
-        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
-          <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🚢 Vessel Profile: i4 ship
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>General Dimensions</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <tbody>
-                  {[
-                    { l: 'Length Overall (LOA)', v: '182.5 m' },
-                    { l: 'Beam (Width)', v: '32.2 m' },
-                    { l: 'Gross Tonnage', v: '29,450 GT' },
-                    { l: 'Net Tonnage', v: '14,120 NT' },
-                    { l: 'IMO Number', v: '9845634' },
-                  ].map(r => (
-                    <tr key={r.l} style={{ borderBottom: '1px solid #e2e8f0' }}><td style={{ padding: '8px 0', color: '#64748b' }}>{r.l}</td><td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 600 }}>{r.v}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>Machinery & Engine</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <tbody>
-                  {[
-                    { l: 'Main Engine Model', v: 'MAN B&W 6S50ME-C' },
-                    { l: 'Max Power output', v: '9,480 kW' },
-                    { l: 'Auxiliary Generators', v: '3 x Yanmar 6EY18AL' },
-                    { l: 'Propeller Type', v: 'Fixed Pitch (4 blades)' },
-                    { l: 'Fuel Consumption', v: '24.5 MT/day (eco)' },
-                  ].map(r => (
-                    <tr key={r.l} style={{ borderBottom: '1px solid #e2e8f0' }}><td style={{ padding: '8px 0', color: '#64748b' }}>{r.l}</td><td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 600 }}>{r.v}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       )}
 
-      {/* ── ALARM TAB ── */}
       {tab === 'alarm' && (
-        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              🚨 Machinery & Navigation Alarms
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🚨 Trigger / Report Vessel Alarm
             </h3>
-            <button className="btn btn-secondary btn-sm" onClick={() => toast.success('All alarms acknowledged! ✅')}>Acknowledge All</button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {alarmLogs.map(a => (
-              <div key={a.id} style={{
-                border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                background: a.status === 'Active' ? '#fff5f5' : '#f8fafc',
-                borderLeft: `5px solid ${a.severity === 'high' || a.severity === 'urgent' ? '#ef4444' : '#f59e0b'}`
-              }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{
-                      fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
-                      background: a.status === 'Active' ? '#fee2e2' : '#cbd5e1',
-                      color: a.status === 'Active' ? '#dc2626' : '#475569'
-                    }}>{a.status.toUpperCase()}</span>
-                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{a.category} • {a.time}</span>
-                  </div>
-                  <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '14.5px' }}>{a.title}</div>
-                </div>
-                {a.status === 'Active' && (
-                  <button className="btn btn-secondary btn-sm" style={{ background: 'white' }} onClick={() => {
-                    setAlarmLogs(alarmLogs.map(al => al.id === a.id ? {...al, status: 'Resolved'} : al));
-                    toast.success('Alarm acknowledged');
-                  }}>Ack</button>
-                )}
+            <form onSubmit={handleTriggerAlarm} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'end' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Alarm Category</label>
+                <input className="form-input" name="category" placeholder="e.g. Navigation, Machinery" required />
               </div>
-            ))}
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Alarm Title / Description</label>
+                <input className="form-input" name="title" placeholder="e.g. Jacket cooling water high temp" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Severity Level</label>
+                <select className="form-select" name="severity">
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+              <button className="btn btn-primary" style={{ height: '42px', background: '#dc2626', border: 'none' }} type="submit"><MdAdd /> Trigger Alarm</button>
+            </form>
+          </div>
+
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🚨 Active & Logged Alarms
+              </h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {alarms.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#888', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                  No active alarms reported.
+                </div>
+              ) : alarms.map(a => (
+                <div key={a._id} style={{
+                  border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: a.status === 'Active' ? '#fff5f5' : '#f8fafc',
+                  borderLeft: `5px solid ${a.severity === 'urgent' || a.severity === 'high' ? '#dc2626' : a.severity === 'warning' ? '#f59e0b' : '#3b82f6'}`
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{
+                        fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
+                        background: a.status === 'Active' ? '#fee2e2' : '#cbd5e1',
+                        color: a.status === 'Active' ? '#dc2626' : '#475569'
+                      }}>{a.status.toUpperCase()}</span>
+                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                        {a.category} • {a.createdAt ? format(new Date(a.createdAt), 'dd-MM-yyyy HH:mm') : a.time}
+                      </span>
+                    </div>
+                    <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '14.5px' }}>{a.title}</div>
+                  </div>
+                  {a.status === 'Active' && (
+                    <button className="btn btn-secondary btn-sm" style={{ background: 'white' }} onClick={() => handleAcknowledgeAlarm(a._id)}>Acknowledge</button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── ODS RECORD BOOK TAB ── */}
       {tab === 'ods' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-          {/* New Entry Form */}
           <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               ✍️ Log Ozone Depleting Substances (ODS) Entry
@@ -554,7 +667,6 @@ export default function StaffDashboard() {
             </form>
           </div>
 
-          {/* Records Table */}
           <div className="table-container">
             <div className="table-toolbar">
               <div style={{ fontWeight: 700, color: '#0f172a' }}>ODS Record Book Logs</div>
@@ -571,14 +683,16 @@ export default function StaffDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {odsEntries.map(e => (
-                  <tr key={e.id}>
-                    <td>{e.date}</td>
+                {odsEntries.length === 0 ? (
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>No ODS logs yet</td></tr>
+                ) : odsEntries.map((e, idx) => (
+                  <tr key={e._id || idx}>
+                    <td>{e.logDate ? e.logDate.slice(0, 10) : '—'}</td>
                     <td style={{ fontWeight: 600 }}>{e.system}</td>
                     <td><span className="badge badge-processing">{e.gasType}</span></td>
                     <td>{e.qty}</td>
                     <td>{e.operation}</td>
-                    <td>{e.person}</td>
+                    <td>{e.loggedBy}</td>
                   </tr>
                 ))}
               </tbody>
@@ -587,7 +701,6 @@ export default function StaffDashboard() {
         </div>
       )}
 
-      {/* ── BALLAST WATER RECORD BOOK TAB ── */}
       {tab === 'ballast' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
           <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
@@ -643,9 +756,11 @@ export default function StaffDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {ballastLogs.map(l => (
-                  <tr key={l.id}>
-                    <td>{l.date}</td>
+                {ballastLogs.length === 0 ? (
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>No ballast water logs yet</td></tr>
+                ) : ballastLogs.map((l, idx) => (
+                  <tr key={l._id || idx}>
+                    <td>{l.logDate ? l.logDate.slice(0, 10) : '—'}</td>
                     <td style={{ fontWeight: 600 }}>{l.tank}</td>
                     <td>{l.volume}</td>
                     <td>{l.salinity}</td>
@@ -659,145 +774,294 @@ export default function StaffDashboard() {
         </div>
       )}
 
-      {/* ── BUNKER RECORD BOOK TAB ── */}
       {tab === 'bunker' && (
-        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            ⛽ Bunker Fuel Operations Log
-          </h3>
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Fuel Grade</th>
-                  <th>Quantity Loaded</th>
-                  <th>Viscosity</th>
-                  <th>Sulfur %</th>
-                  <th>Supplier</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bunkerLogs.map(b => (
-                  <tr key={b.id}>
-                    <td>{b.date}</td>
-                    <td style={{ fontWeight: 600 }}>{b.fuelType}</td>
-                    <td>{b.qty}</td>
-                    <td>{b.viscosity}</td>
-                    <td><span className="badge badge-warning" style={{ background: '#fef3c7', color: '#b45309' }}>{b.sulfur}</span></td>
-                    <td>{b.supplier}</td>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ⛽ Log Bunker Fuel Operation
+            </h3>
+            <form onSubmit={handleAddBunker} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'end' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Date</label>
+                <input className="form-input" type="date" name="date" required defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Fuel Grade / Type</label>
+                <input className="form-input" name="fuelType" placeholder="e.g. VLSFO 0.5%" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Quantity Loaded (MT)</label>
+                <input className="form-input" type="number" step="0.1" name="qty" placeholder="e.g. 350" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Viscosity (cSt)</label>
+                <input className="form-input" type="number" step="0.1" name="viscosity" placeholder="e.g. 380" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Sulfur Content (%)</label>
+                <input className="form-input" type="number" step="0.01" name="sulfur" placeholder="e.g. 0.49" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Supplier Name</label>
+                <input className="form-input" name="supplier" placeholder="e.g. Shell Marine" required />
+              </div>
+              <button className="btn btn-primary" style={{ height: '42px', background: '#3b82f6', border: 'none' }} type="submit"><MdAdd /> Log Bunker</button>
+            </form>
+          </div>
+
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ⛽ Bunker Fuel Operations Log
+            </h3>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Fuel Grade</th>
+                    <th>Quantity Loaded</th>
+                    <th>Viscosity</th>
+                    <th>Sulfur %</th>
+                    <th>Supplier</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {bunkerLogs.length === 0 ? (
+                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>No bunker logs yet</td></tr>
+                  ) : bunkerLogs.map((b, idx) => (
+                    <tr key={b._id || idx}>
+                      <td>{b.logDate ? b.logDate.slice(0, 10) : '—'}</td>
+                      <td style={{ fontWeight: 600 }}>{b.fuelType}</td>
+                      <td>{b.qty}</td>
+                      <td>{b.viscosity}</td>
+                      <td><span className="badge badge-warning" style={{ background: '#fef3c7', color: '#b45309' }}>{b.sulfur}</span></td>
+                      <td>{b.supplier}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── CARGO RECORD BOOK TAB ── */}
       {tab === 'cargo' && (
-        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            📦 Cargo Transfer & Discharge Log
-          </h3>
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Operation</th>
-                  <th>Cargo Type</th>
-                  <th>Quantity Transfered</th>
-                  <th>Average Rate</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cargoLogs.map(c => (
-                  <tr key={c.id}>
-                    <td>{c.date}</td>
-                    <td><span className={`badge ${c.operation === 'Loading' ? 'badge-processing' : 'badge-dispatched'}`}>{c.operation}</span></td>
-                    <td style={{ fontWeight: 600 }}>{c.cargoType}</td>
-                    <td>{c.qty}</td>
-                    <td>{c.rate}</td>
-                    <td><span className="badge badge-delivered">{c.status}</span></td>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              📦 Log Cargo Transfer Operation
+            </h3>
+            <form onSubmit={handleAddCargo} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'end' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Date</label>
+                <input className="form-input" type="date" name="date" required defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Operation Type</label>
+                <select className="form-select" name="operation">
+                  <option value="Loading">Loading</option>
+                  <option value="Discharging">Discharging</option>
+                  <option value="Transfer">Internal Transfer</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Cargo Type</label>
+                <input className="form-input" name="cargoType" placeholder="e.g. Crude Oil" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Quantity</label>
+                <input className="form-input" name="qty" placeholder="e.g. 15000 MT" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Average Rate</label>
+                <input className="form-input" name="rate" placeholder="e.g. 1200 MT/hr" required />
+              </div>
+              <button className="btn btn-primary" style={{ height: '42px', background: '#3b82f6', border: 'none' }} type="submit"><MdAdd /> Log Cargo</button>
+            </form>
+          </div>
+
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              📦 Cargo Transfer & Discharge Log
+            </h3>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Operation</th>
+                    <th>Cargo Type</th>
+                    <th>Quantity Transfered</th>
+                    <th>Average Rate</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {cargoLogs.length === 0 ? (
+                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>No cargo logs yet</td></tr>
+                  ) : cargoLogs.map((c, idx) => (
+                    <tr key={c._id || idx}>
+                      <td>{c.logDate ? c.logDate.slice(0, 10) : '—'}</td>
+                      <td><span className={`badge ${c.operation === 'Loading' ? 'badge-processing' : 'badge-dispatched'}`}>{c.operation}</span></td>
+                      <td style={{ fontWeight: 600 }}>{c.cargoType}</td>
+                      <td>{c.qty}</td>
+                      <td>{c.rate}</td>
+                      <td><span className="badge badge-delivered">{c.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── CONSUMPTION LOG TAB ── */}
       {tab === 'consumption' && (
-        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>📉 Vessel Fuel & Power Consumption</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>Main Engine Average Fuel Load</div>
-              <div style={{ fontSize: '24px', fontWeight: 800, color: '#3b82f6' }}>22.4 MT / Day</div>
-            </div>
-            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>Generators (Aux Engine) Load</div>
-              <div style={{ fontSize: '24px', fontWeight: 800, color: '#10b981' }}>2.1 MT / Day</div>
-            </div>
-            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>Total daily CO2 emissions (est)</div>
-              <div style={{ fontSize: '24px', fontWeight: 800, color: '#ef4444' }}>76.8 Tons</div>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ✍️ Log Daily Fuel & Power Consumption
+            </h3>
+            <form onSubmit={handleAddConsumption} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'end' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Date</label>
+                <input className="form-input" type="date" name="date" required defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Main Engine Fuel (MT/day)</label>
+                <input className="form-input" type="number" step="0.1" name="mainEngineFuel" placeholder="e.g. 24.5" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Aux Engine/Gen Fuel (MT/day)</label>
+                <input className="form-input" type="number" step="0.1" name="auxEngineFuel" placeholder="e.g. 2.1" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">CO2 Emissions (Tons)</label>
+                <input className="form-input" type="number" step="0.1" name="co2Emissions" placeholder="e.g. 78.2" required />
+              </div>
+              <button className="btn btn-primary" style={{ height: '42px', background: '#3b82f6', border: 'none' }} type="submit"><MdAdd /> Log Consumption</button>
+            </form>
           </div>
-          {/* Simple Visual Bar Chart */}
-          <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <div style={{ fontWeight: 700, marginBottom: '14px', fontSize: '14px' }}>Hourly Fuel Feed Rate (Ltrs/hr)</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {[
-                { time: '00:00 - 04:00', val: 780, max: 1000 },
-                { time: '04:00 - 08:00', val: 820, max: 1000 },
-                { time: '08:00 - 12:00', val: 940, max: 1000 },
-                { time: '12:00 - 16:00', val: 910, max: 1000 },
-                { time: '16:00 - 20:00', val: 860, max: 1000 },
-              ].map(h => (
-                <div key={h.time} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px' }}>
-                  <span style={{ width: '100px', color: '#64748b' }}>{h.time}</span>
-                  <div style={{ flex: 1, height: '14px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', background: '#3b82f6', width: `${(h.val / h.max) * 100}%` }} />
-                  </div>
-                  <span style={{ fontWeight: 600, color: '#0f172a' }}>{h.val} L/hr</span>
-                </div>
-              ))}
+
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>📉 Vessel Fuel & Power Consumption</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>Main Engine Average Fuel Load</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#3b82f6' }}>22.4 MT / Day</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>Generators (Aux Engine) Load</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#10b981' }}>2.1 MT / Day</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>Total daily CO2 emissions (est)</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#ef4444' }}>76.8 Tons</div>
+              </div>
+            </div>
+
+            <div className="table-container" style={{ marginTop: '24px' }}>
+              <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>Consumption Logs History</div>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Main Engine Fuel</th>
+                    <th>Aux Engine Fuel</th>
+                    <th>CO2 Emissions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {consumptionLogs.length === 0 ? (
+                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>No consumption logs yet</td></tr>
+                  ) : consumptionLogs.map((l, idx) => (
+                    <tr key={l._id || idx}>
+                      <td>{l.logDate ? l.logDate.slice(0, 10) : '—'}</td>
+                      <td style={{ fontWeight: 600 }}>{l.mainEngineFuel}</td>
+                      <td>{l.auxEngineFuel}</td>
+                      <td><span className="badge badge-warning" style={{ background: '#fee2e2', color: '#dc2626' }}>{l.co2Emissions}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── DECK LOG BOOK TAB ── */}
       {tab === 'deck' && (
-        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>📝 Navigational Deck Log Book</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ✍️ Log Navigational Deck Log Entry
+            </h3>
+            <form onSubmit={handleAddDeckLog} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'end' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Log Date</label>
+                <input className="form-input" type="date" name="logDate" required defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Latitude</label>
+                <input className="form-input" name="latitude" placeholder="e.g. 18.9750° N" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Longitude</label>
+                <input className="form-input" name="longitude" placeholder="e.g. 72.8258° E" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Speed (knots)</label>
+                <input className="form-input" type="number" step="0.1" name="speed" placeholder="e.g. 14.5" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Course</label>
+                <input className="form-input" name="course" placeholder="e.g. 045°" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Weather</label>
+                <input className="form-input" name="weather" placeholder="e.g. NW Force 3" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0, gridColumn: '1 / -1' }}>
+                <label className="form-label">Remarks</label>
+                <input className="form-input" name="remarks" placeholder="Remarks / Operational Notes" />
+              </div>
+              <button className="btn btn-primary" style={{ height: '42px', background: '#ef4444', border: 'none', gridColumn: '1 / -1' }} type="submit">
+                <MdAdd /> Log Entry
+              </button>
+            </form>
+          </div>
+
           <div className="table-container">
+            <div className="table-toolbar">
+              <div style={{ fontWeight: 700, color: '#0f172a' }}>Navigational Deck Log Book Logs</div>
+            </div>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Time / Watch</th>
-                  <th>Officer on Watch</th>
-                  <th>Compass Heading</th>
-                  <th>Wind & Sea State</th>
-                  <th>Remarks / Operational Notes</th>
+                  <th>No</th>
+                  <th>Date</th>
+                  <th>Latitude</th>
+                  <th>Longitude</th>
+                  <th>Speed</th>
+                  <th>Course</th>
+                  <th>Weather</th>
+                  <th>Remarks</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { time: '00:00 - 04:00', officer: 'Second Mate', heading: '045°', weather: 'NW Force 3 / Smooth Sea', remarks: 'Vessel on autopilot. Navigational lights checked. Position logged hourly.' },
-                  { time: '04:00 - 08:00', officer: 'Chief Mate', heading: '045°', weather: 'W Force 2 / Ripple Sea', remarks: 'Lookout posted. Handover watch. Completed daily safety checklist.' },
-                  { time: '08:00 - 12:00', officer: 'Third Mate', heading: '048°', weather: 'Calm / Mirror Sea', remarks: 'Vessel trimmed. Hand steering tests completed. Fire drill completed.' }
-                ].map((l, i) => (
-                  <tr key={i}>
-                    <td>{l.time}</td>
-                    <td style={{ fontWeight: 600 }}>{l.officer}</td>
-                    <td>{l.heading}</td>
-                    <td>{l.weather}</td>
-                    <td style={{ fontSize: '12.5px', color: '#475569' }}>{l.remarks}</td>
+                {loadingLogs ? (
+                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>Loading...</td></tr>
+                ) : deckLogs.length === 0 ? (
+                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>No deck logs logged yet</td></tr>
+                ) : deckLogs.map((log, idx) => (
+                  <tr key={log._id || idx}>
+                    <td>{idx + 1}</td>
+                    <td>{log.logDate ? log.logDate.slice(0, 10) : format(new Date(log.createdAt), 'yyyy-MM-dd')}</td>
+                    <td style={{ fontWeight: 600 }}>{log.latitude}</td>
+                    <td style={{ fontWeight: 600 }}>{log.longitude}</td>
+                    <td>{log.speed} kts</td>
+                    <td>{log.course}</td>
+                    <td>{log.weather}</td>
+                    <td style={{ fontSize: '12.5px', color: '#475569' }}>{log.remarks || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -806,86 +1070,73 @@ export default function StaffDashboard() {
         </div>
       )}
 
-      {/* ── ENGINE LOG BOOK TAB ── */}
       {tab === 'engine' && (
-        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>⚙️ Engine Machinery Parameters Log</h3>
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Parameter</th>
-                  <th>Standard Value</th>
-                  <th>Current Reading</th>
-                  <th>Engine Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { p: 'Main Engine RPM', std: '78 - 84 RPM', cur: '82 RPM', s: 'Normal' },
-                  { p: 'Jacket Cooling Water Inlet Temp', std: '68 - 72 °C', cur: '70.5 °C', s: 'Normal' },
-                  { p: 'Lube Oil Pump Outlet Pressure', std: '3.2 - 3.8 bar', cur: '3.45 bar', s: 'Normal' },
-                  { p: 'Turbocharger RPM', std: '11,200 RPM', cur: '11,450 RPM', s: 'Normal' },
-                  { p: 'Scavenge Air Temperature', std: '40 - 45 °C', cur: '42.1 °C', s: 'Normal' }
-                ].map((l, i) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: 600 }}>{l.p}</td>
-                    <td>{l.std}</td>
-                    <td style={{ color: '#3b82f6', fontWeight: 700 }}>{l.cur}</td>
-                    <td><span className="badge badge-delivered">{l.s}</span></td>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ⚙️ Log Engine Machinery Parameters
+            </h3>
+            <form onSubmit={handleAddEngineLog} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', alignItems: 'end' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Date</label>
+                <input className="form-input" type="date" name="date" required defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">RPM</label>
+                <input className="form-input" type="number" name="rpm" placeholder="e.g. 80" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Jacket Temp (°C)</label>
+                <input className="form-input" type="number" step="0.1" name="jacketTemp" placeholder="e.g. 70.5" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Lube Pressure (bar)</label>
+                <input className="form-input" type="number" step="0.01" name="lubePressure" placeholder="e.g. 3.4" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Turbo RPM</label>
+                <input className="form-input" type="number" name="turboRpm" placeholder="e.g. 11400" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Scavenge Temp (°C)</label>
+                <input className="form-input" type="number" step="0.1" name="scavengeTemp" placeholder="e.g. 42" required />
+              </div>
+              <button className="btn btn-primary" style={{ height: '42px', background: '#3b82f6', border: 'none', gridColumn: 'span 2' }} type="submit"><MdAdd /> Log Parameters</button>
+            </form>
+          </div>
+
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>⚙️ Engine Machinery Parameters Log</h3>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>RPM</th>
+                    <th>Jacket Temp</th>
+                    <th>Lube Pressure</th>
+                    <th>Turbo RPM</th>
+                    <th>Scavenge Temp</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {engineLogs.length === 0 ? (
+                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>No engine logs yet</td></tr>
+                  ) : engineLogs.map((l, idx) => (
+                    <tr key={l._id || idx}>
+                      <td>{l.logDate ? l.logDate.slice(0, 10) : '—'}</td>
+                      <td style={{ fontWeight: 600 }}>{l.rpm}</td>
+                      <td>{l.jacketTemp}</td>
+                      <td>{l.lubePressure}</td>
+                      <td>{l.turboRpm}</td>
+                      <td>{l.scavengeTemp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      )}
-
-      {/* Floating Action Buttons in bottom-right corner */}
-      <div style={{ position: 'fixed', bottom: '24px', right: '24px', display: 'flex', flexDirection: 'column', gap: '12px', zIndex: 100 }}>
-        {/* Chat / Message Button */}
-        <button style={{
-          width: '54px', height: '54px', borderRadius: '50%',
-          background: '#ef4444', color: 'white', border: 'none',
-          boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '22px', cursor: 'pointer', transition: 'transform 0.2s',
-        }} onClick={() => toast.success('Ship messaging channel is active 📡')}
-           className="btn-hover-bounce">
-          💬
-        </button>
-
-        {/* Plus Button */}
-        <button style={{
-          width: '54px', height: '54px', borderRadius: '50%',
-          background: '#ef4444', color: 'white', border: 'none',
-          boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '24px', cursor: 'pointer', transition: 'transform 0.2s',
-        }} onClick={() => {
-          if (firstActive) { setStatusShipment(firstActive); }
-          else { toast.error('No active voyage to update'); }
-        }}
-           className="btn-hover-bounce">
-          +
-        </button>
-      </div>
-
-      {/* Modals */}
-      {selectedShipment && (
-        <ShipmentDetailModal
-          shipment={selectedShipment}
-          onClose={() => setSelectedShipment(null)}
-          onRefresh={fetchStats}
-          showProofUpload
-        />
-      )}
-      {statusShipment && (
-        <StatusUpdateModal
-          shipment={statusShipment}
-          onClose={() => setStatusShipment(null)}
-          onSuccess={() => { setStatusShipment(null); fetchStats(); }}
-        />
       )}
     </AppLayout>
   );

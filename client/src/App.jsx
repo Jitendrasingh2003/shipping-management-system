@@ -4,8 +4,12 @@ import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Pages
-import LoginPage from './pages/auth/LoginPage';
+// Auth Pages
+import PortalSelectPage from './pages/auth/PortalSelectPage';
+import AdminLoginPage from './pages/auth/AdminLoginPage';
+import ManagerLoginPage from './pages/auth/ManagerLoginPage';
+import StaffLoginPage from './pages/auth/StaffLoginPage';
+import CompanyRegisterPage from './pages/auth/CompanyRegisterPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -26,6 +30,17 @@ import GeneralEnquiry from './pages/admin/GeneralEnquiry';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import AssignDeliveries from './pages/manager/AssignDeliveries';
 import CreateShipmentPage from './pages/manager/CreateShipmentPage';
+import ShipListPage from './pages/manager/ShipListPage';
+import CompanyStaffPage from './pages/manager/CompanyStaffPage';
+import VoyagePage from './pages/manager/VoyagePage';
+import DeckLogPage from './pages/manager/DeckLogPage';
+import AlarmPage from './pages/manager/AlarmPage';
+import OdsPage from './pages/manager/OdsPage';
+import BallastPage from './pages/manager/BallastPage';
+import BunkerPage from './pages/manager/BunkerPage';
+import CargoPage from './pages/manager/CargoPage';
+import ConsumptionPage from './pages/manager/ConsumptionPage';
+import EnginePage from './pages/manager/EnginePage';
 
 // Staff Pages
 import StaffDashboard from './pages/staff/StaffDashboard';
@@ -52,12 +67,18 @@ function App() {
             }}
           />
           <Routes>
-            {/* Public */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* ===== PUBLIC: Portal Selection & Role Logins ===== */}
+            <Route path="/" element={<PortalSelectPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/manager/login" element={<ManagerLoginPage />} />
+            <Route path="/manager/register" element={<CompanyRegisterPage />} />
+            <Route path="/staff/login" element={<StaffLoginPage />} />
 
-            {/* Admin Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            {/* Legacy /login → redirect to portal selection */}
+            <Route path="/login" element={<Navigate to="/" replace />} />
+
+            {/* ===== ADMIN Routes ===== */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} loginPath="/admin/login" />}>
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/shipments" element={<AllShipments />} />
               <Route path="/admin/users" element={<UserManagement />} />
@@ -73,24 +94,30 @@ function App() {
               <Route path="/admin/enquiries" element={<GeneralEnquiry />} />
             </Route>
 
-            {/* Manager Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['manager']} />}>
+            {/* ===== MANAGER Routes ===== */}
+            <Route element={<ProtectedRoute allowedRoles={['manager']} loginPath="/manager/login" />}>
               <Route path="/manager" element={<ManagerDashboard />} />
-              <Route path="/manager/shipments" element={<AllShipments />} />
-              <Route path="/manager/create-shipment" element={<CreateShipmentPage />} />
-              <Route path="/manager/assign" element={<AssignDeliveries />} />
-              <Route path="/manager/reports" element={<Reports />} />
-              <Route path="/manager/invoices" element={<Invoices />} />
+              <Route path="/manager/ships" element={<ShipListPage />} />
+              <Route path="/manager/company-staff" element={<CompanyStaffPage />} />
+              <Route path="/manager/voyage" element={<VoyagePage />} />
+              <Route path="/manager/alarm" element={<AlarmPage />} />
+              <Route path="/manager/ods" element={<OdsPage />} />
+              <Route path="/manager/ballast" element={<BallastPage />} />
+              <Route path="/manager/bunker" element={<BunkerPage />} />
+              <Route path="/manager/cargo" element={<CargoPage />} />
+              <Route path="/manager/consumption" element={<ConsumptionPage />} />
+              <Route path="/manager/deck" element={<DeckLogPage />} />
+              <Route path="/manager/engine" element={<EnginePage />} />
             </Route>
 
-            {/* Staff Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
+            {/* ===== STAFF Routes ===== */}
+            <Route element={<ProtectedRoute allowedRoles={['staff']} loginPath="/staff/login" />}>
               <Route path="/staff" element={<StaffDashboard />} />
               <Route path="/staff/deliveries" element={<MyDeliveries />} />
             </Route>
 
-            {/* 404 */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* 404 → back to portal selection */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </SocketProvider>
       </AuthProvider>
