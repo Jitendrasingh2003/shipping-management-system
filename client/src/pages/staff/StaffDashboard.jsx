@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import {
   dashboardAPI, deckLogAPI, voyageAPI, alarmAPI, odsAPI,
-  ballastAPI, bunkerAPI, cargoAPI, consumptionAPI, engineLogAPI
+  ballastAPI, bunkerAPI, cargoAPI, consumptionAPI, engineLogAPI,
+  shipAPI, crewAPI
 } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -34,6 +35,8 @@ export default function StaffDashboard() {
   const [cargoLogs, setCargoLogs] = useState([]);
   const [consumptionLogs, setConsumptionLogs] = useState([]);
   const [engineLogs, setEngineLogs] = useState([]);
+  const [shipments, setShipments] = useState([]);
+  const [shipCrew, setShipCrew] = useState([]);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
@@ -74,10 +77,28 @@ export default function StaffDashboard() {
     engineLogAPI.getAll().then(r => setEngineLogs(r.data.logs || [])).catch(() => {});
   };
 
+  const loadShipCargoAndCrew = async () => {
+    if (!ship) return;
+    try {
+      const [cargoRes, crewRes] = await Promise.all([
+        shipAPI.getCargo(ship._id),
+        crewAPI.getAll({ shipId: ship._id })
+      ]);
+      setShipments(cargoRes.data.shipments || []);
+      setShipCrew(crewRes.data.crew || []);
+      if (cargoRes.data.cargoLogs) {
+        setCargoLogs(cargoRes.data.cargoLogs);
+      }
+    } catch (err) {
+      console.error("Failed to load cargo/crew details on dashboard", err);
+    }
+  };
+
   useEffect(() => {
     if (ship) {
       loadDeckLogs();
       loadAllLogbooks();
+      loadShipCargoAndCrew();
     }
   }, [ship]);
 
@@ -553,6 +574,263 @@ export default function StaffDashboard() {
                 textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700
               }}>
                 Speed: 4.0 KTS
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'ship' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🚢 Assigned Vessel Profile
+            </h3>
+            {ship ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <strong style={{ color: '#64748b', fontSize: '12px', display: 'block', textTransform: 'uppercase' }}>Vessel Name</strong>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>{ship.name}</span>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <strong style={{ color: '#64748b', fontSize: '12px', display: 'block', textTransform: 'uppercase' }}>IMO Number</strong>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>{ship.imoNumber || '—'}</span>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <strong style={{ color: '#64748b', fontSize: '12px', display: 'block', textTransform: 'uppercase' }}>Flag State</strong>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>🚩 {ship.flag}</span>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <strong style={{ color: '#64748b', fontSize: '12px', display: 'block', textTransform: 'uppercase' }}>Ship Type</strong>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>{ship.type || 'Container Ship'}</span>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: 'span 2' }}>
+                  <strong style={{ color: '#64748b', fontSize: '12px', display: 'block', textTransform: 'uppercase' }}>Operational Status</strong>
+                  <span className="marine-status-badge" style={{
+                    color: ship.status === 'Active' ? '#16a34a' : '#d97706',
+                    background: (ship.status === 'Active' ? '#16a34a' : '#d97706') + '18',
+                    marginTop: '6px', display: 'inline-block'
+                  }}>{ship.status}</span>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: '#64748b' }}>No vessel assigned to your staff account yet.</p>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px' }}>
+            {/* Crew Members */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>👥 Vessel Crew Mates</h3>
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Designation</th>
+                      <th>Nationality</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shipCrew.length === 0 ? (
+                      <tr><td colSpan={3} style={{ textAlign: 'center', padding: '20px' }}>No crew members assigned yet</td></tr>
+                    ) : shipCrew.map(c => (
+                      <tr key={c._id}>
+                        <td style={{ fontWeight: 600 }}>{c.name} {c.userId?.toString() === user?.id?.toString() && ' (You)'}</td>
+                        <td>{c.designation}</td>
+                        <td>{c.nationality}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Carrying Cargo Shipments */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>📦 Cargo Packages Loaded</h3>
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Tracking ID</th>
+                      <th>Destination</th>
+                      <th>Weight</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shipments.length === 0 ? (
+                      <tr><td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>No cargo shipments assigned</td></tr>
+                    ) : shipments.map(s => (
+                      <tr key={s._id}>
+                        <td style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>{s.trackingId}</td>
+                        <td>{s.receiverCity} ({s.receiverCountry})</td>
+                        <td>{s.weight} kg</td>
+                        <td><span className={`badge badge-${s.status}`}>{s.status}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'voyage' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          {/* Voyage Progress Header */}
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>📍 Active Voyage Route</h3>
+            {currentVoyage ? (
+              <div>
+                <div style={{ fontSize: '13px', color: '#3b82f6', fontWeight: 700, marginBottom: '20px' }}>
+                  VOYAGE NO. {currentVoyage.voyageNo} ({currentVoyage.voyageType?.toUpperCase()})
+                </div>
+                <div style={{ position: 'relative', padding: '0 20px', marginBottom: '40px' }}>
+                  <div style={{ height: '4px', background: '#e2e8f0', width: '100%', borderRadius: '4px', position: 'absolute', top: '24px', left: 0, right: 0 }} />
+                  <div style={{
+                    height: '4px',
+                    background: 'linear-gradient(90deg, #3b82f6, #06b6d4)',
+                    width: `${progressPercent}%`,
+                    borderRadius: '4px',
+                    position: 'absolute', top: '24px', left: 0,
+                    transition: 'width 0.4s ease'
+                  }} />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', zIndex: 2 }}>
+                    {voyageStages.map((stage, i) => {
+                      const isActive = i <= currentStageIndex;
+                      const isCurrent = i === currentStageIndex;
+                      return (
+                        <div key={stage} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                          <div style={{ height: '24px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                            {isCurrent && <span style={{ fontSize: '20px' }}>📍</span>}
+                          </div>
+                          <div style={{
+                            width: '18px', height: '18px', borderRadius: '50%',
+                            background: isCurrent ? '#ffffff' : isActive ? '#3b82f6' : '#e2e8f0',
+                            border: isCurrent ? '5px solid #ef4444' : isActive ? 'none' : '3px solid #cbd5e1',
+                            margin: '6px 0 10px',
+                          }} />
+                          <div style={{
+                            fontSize: '11px', fontWeight: 700,
+                            color: isCurrent ? '#ef4444' : isActive ? '#0f172a' : '#64748b',
+                          }}>{stage}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>Departure Port</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>🗺️ {currentVoyage.departurePort || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>Arrival Port / Destination</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>🏁 {currentVoyage.arrivalPort || '—'}</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: '#64748b' }}>No active voyages assigned to your vessel.</p>
+            )}
+          </div>
+
+          {/* Coordinate Position Tracker */}
+          <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '28px' }}>
+            {/* Live GPS Tracker Card */}
+            <div style={{ background: '#0f172a', color: 'white', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+              <h4 style={{ fontSize: '16px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🛰️ Current Vessel Coordinates
+              </h4>
+              <div style={{
+                background: '#020617',
+                borderRadius: '12px',
+                height: '160px',
+                position: 'relative',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'inset 0 0 20px rgba(0,0,0,0.9)',
+                border: '1px solid #1e293b'
+              }}>
+                <div style={{ position: 'absolute', width: '220px', height: '220px', borderRadius: '50%', border: '1px solid rgba(16, 185, 129, 0.15)' }} />
+                <div style={{ position: 'absolute', width: '150px', height: '150px', borderRadius: '50%', border: '1px solid rgba(16, 185, 129, 0.25)' }} />
+                <div style={{ position: 'absolute', width: '80px', height: '80px', borderRadius: '50%', border: '1px solid rgba(16, 185, 129, 0.35)' }} />
+                <div className="radar-sweep" style={{
+                  position: 'absolute', width: '100%', height: '100%',
+                  background: 'conic-gradient(from 0deg at 50% 50%, rgba(16, 185, 129, 0.15) 0deg, transparent 90deg)',
+                  animation: 'spin 4s linear infinite',
+                  transformOrigin: 'center'
+                }} />
+                <div style={{
+                  position: 'absolute', top: '48%', left: '52%',
+                  width: '10px', height: '10px', borderRadius: '50%',
+                  background: '#ef4444', boxShadow: '0 0 10px #ef4444',
+                }} />
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#94a3b8' }}>Latitude:</span>
+                  <span style={{ fontWeight: 700, fontFamily: 'monospace' }}>{deckLogs[0]?.latitude || '18.9750° N'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#94a3b8' }}>Longitude:</span>
+                  <span style={{ fontWeight: 700, fontFamily: 'monospace' }}>{deckLogs[0]?.longitude || '72.8258° E'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#94a3b8' }}>Last Logged Speed:</span>
+                  <span style={{ fontWeight: 700 }}>{deckLogs[0]?.speed ? deckLogs[0].speed + ' kts' : '14.5 kts'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#94a3b8' }}>Last Course:</span>
+                  <span style={{ fontWeight: 700 }}>{deckLogs[0]?.course || '045°'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#94a3b8' }}>Log Status:</span>
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>✓ Position Reported</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Position logs */}
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px', display: 'flex', flexDirection: 'column' }}>
+              <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>📋 Position Reports History</h4>
+              <div className="table-container" style={{ flex: 1 }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Latitude</th>
+                      <th>Longitude</th>
+                      <th>Speed</th>
+                      <th>Course</th>
+                      <th>Weather</th>
+                      <th>Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deckLogs.length === 0 ? (
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>No positions logged yet</td></tr>
+                    ) : deckLogs.slice(0, 10).map((log, idx) => (
+                      <tr key={log._id || idx}>
+                        <td>{log.logDate ? log.logDate.slice(0, 10) : '—'}</td>
+                        <td style={{ fontWeight: 600 }}>{log.latitude}</td>
+                        <td style={{ fontWeight: 600 }}>{log.longitude}</td>
+                        <td>{log.speed} kts</td>
+                        <td>{log.course}</td>
+                        <td>{log.weather}</td>
+                        <td style={{ fontSize: '12px', color: '#475569' }}>{log.remarks || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

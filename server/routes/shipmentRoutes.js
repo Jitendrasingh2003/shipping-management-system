@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { protect, authorize } = require('../middleware/auth');
+const { validateCreateShipment, validateUpdateStatus, validateAssignShipment, validateMongoId } = require('../middleware/validators');
 const {
   getShipments, getAssignedShipments, getShipmentById, trackShipment,
   createShipment, updateShipment, updateStatus, assignShipment, uploadProof, deleteShipment,
@@ -28,14 +29,14 @@ router.get('/track/:trackingId', trackShipment);
 // Protected
 router.use(protect);
 
-router.get('/assigned', authorize('staff'), getAssignedShipments);
-router.get('/', authorize('admin', 'manager'), getShipments);
-router.post('/', authorize('admin', 'manager'), createShipment);
-router.get('/:id', authorize('admin', 'manager', 'staff'), getShipmentById);
-router.put('/:id', authorize('admin', 'manager'), updateShipment);
-router.patch('/:id/status', authorize('admin', 'manager', 'staff'), updateStatus);
-router.patch('/:id/assign', authorize('admin', 'manager'), assignShipment);
-router.patch('/:id/proof', authorize('staff'), upload.single('proof'), uploadProof);
-router.delete('/:id', authorize('admin'), deleteShipment);
+router.get('/assigned',      authorize('staff'),                    getAssignedShipments);
+router.get('/',              authorize('admin', 'manager'),          getShipments);
+router.post('/',             authorize('admin', 'manager'),          validateCreateShipment, createShipment);
+router.get('/:id',           authorize('admin', 'manager', 'staff'), validateMongoId, getShipmentById);
+router.put('/:id',           authorize('admin', 'manager'),          validateMongoId, updateShipment);
+router.patch('/:id/status',  authorize('admin', 'manager', 'staff'), validateMongoId, validateUpdateStatus, updateStatus);
+router.patch('/:id/assign',  authorize('admin', 'manager'),          validateMongoId, validateAssignShipment, assignShipment);
+router.patch('/:id/proof',   authorize('staff'),                    validateMongoId, upload.single('proof'), uploadProof);
+router.delete('/:id',        authorize('admin'),                    validateMongoId, deleteShipment);
 
 module.exports = router;

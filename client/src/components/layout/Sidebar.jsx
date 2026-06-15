@@ -40,12 +40,16 @@ const navConfig = {
 
 
   manager: [
-    { section: 'Marine operations', items: [
+    { section: 'Logistics Operations', items: [
       { to: '/manager',                  icon: <MdDashboard />,        label: 'Dashboard', exact: true },
-      { to: '/manager/ships',            icon: <MdDirectionsBoat />,   label: 'Ship' },
-      { to: '/manager/company-staff',    icon: <MdPeople />,           label: 'Staff' },
-      { to: '/manager/voyage',           icon: <MdTimeline />,         label: 'Voyage' },
-      { to: '/manager/alarm',            icon: <MdWarning />,          label: 'Alarm' },
+      { to: '/manager/create-shipment',  icon: <MdAssignment />,       label: 'Create Shipment' },
+      { to: '/manager/assign-deliveries',icon: <MdDeliveryDining />,   label: 'Assign Deliveries' },
+      { to: '/manager/company-staff',    icon: <MdPeople />,           label: 'Staff Management' },
+    ]},
+    { section: 'Marine Operations', items: [
+      { to: '/manager/ships',            icon: <MdDirectionsBoat />,   label: 'Vessel Registry' },
+      { to: '/manager/voyage',           icon: <MdTimeline />,         label: 'Voyage Registry' },
+      { to: '/manager/alarm',            icon: <MdWarning />,          label: 'Alarms & Alerts' },
       { to: '/manager/ods',              icon: <MdMenuBook />,         label: 'ODS Record Book' },
       { to: '/manager/ballast',          icon: <MdWater />,            label: 'Ballast Water Record Book' },
       { to: '/manager/bunker',           icon: <MdLocalGasStation />,  label: 'Bunker Record Book' },
@@ -57,22 +61,22 @@ const navConfig = {
   ],
 
   staff: [
-    {
-      section: '',
-      items: [
-        { to: '/staff',                 icon: <MdDashboard />,       label: 'Dashboard', exact: true },
-        { to: '/staff?tab=ship',        icon: <MdDirectionsBoat />,  label: 'Ship' },
-        { to: '/staff?tab=voyage',      icon: <MdTimeline />,        label: 'Voyage' },
-        { to: '/staff?tab=alarm',       icon: <MdWarning />,         label: 'Alarm' },
-        { to: '/staff?tab=ods',         icon: <MdMenuBook />,        label: 'ODS Record Book' },
-        { to: '/staff?tab=ballast',     icon: <MdWater />,           label: 'Ballast Water Record Book' },
-        { to: '/staff?tab=bunker',      icon: <MdLocalGasStation />, label: 'Bunker Record Book' },
-        { to: '/staff?tab=cargo',       icon: <MdInventory />,       label: 'Cargo Record Book' },
-        { to: '/staff?tab=consumption', icon: <MdBarChart />,        label: 'Consumption Log Book' },
-        { to: '/staff?tab=deck',        icon: <MdMenuBook />,        label: 'Deck Log Book' },
-        { to: '/staff?tab=engine',      icon: <MdEngineering />,     label: 'Engine Log Book' },
-      ]
-    }
+    { section: 'Logistics Operations', items: [
+      { to: '/staff',                 icon: <MdDashboard />,       label: 'Dashboard', exact: true },
+      { to: '/staff/deliveries',      icon: <MdDeliveryDining />,  label: 'My Deliveries' },
+    ]},
+    { section: 'Marine Logbooks', items: [
+      { to: '/staff?tab=ship',        icon: <MdDirectionsBoat />,  label: 'Ship Overview' },
+      { to: '/staff?tab=voyage',      icon: <MdTimeline />,        label: 'Voyage Registry' },
+      { to: '/staff?tab=alarm',       icon: <MdWarning />,         label: 'Alarms & Alerts' },
+      { to: '/staff?tab=ods',         icon: <MdMenuBook />,        label: 'ODS Record Book' },
+      { to: '/staff?tab=ballast',     icon: <MdWater />,           label: 'Ballast Water Book' },
+      { to: '/staff?tab=bunker',      icon: <MdLocalGasStation />, label: 'Bunker Fuel Book' },
+      { to: '/staff?tab=cargo',       icon: <MdInventory />,       label: 'Cargo Operations' },
+      { to: '/staff?tab=consumption', icon: <MdBarChart />,        label: 'Fuel Consumption' },
+      { to: '/staff?tab=deck',        icon: <MdMenuBook />,        label: 'Deck Logbook' },
+      { to: '/staff?tab=engine',      icon: <MdEngineering />,     label: 'Engine Parameters' },
+    ]}
   ],
 };
 

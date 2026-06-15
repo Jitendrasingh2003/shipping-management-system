@@ -97,6 +97,8 @@ function App() {
             {/* ===== MANAGER Routes ===== */}
             <Route element={<ProtectedRoute allowedRoles={['manager']} loginPath="/manager/login" />}>
               <Route path="/manager" element={<ManagerDashboard />} />
+              <Route path="/manager/create-shipment" element={<CreateShipmentPage />} />
+              <Route path="/manager/assign-deliveries" element={<AssignDeliveries />} />
               <Route path="/manager/ships" element={<ShipListPage />} />
               <Route path="/manager/company-staff" element={<CompanyStaffPage />} />
               <Route path="/manager/voyage" element={<VoyagePage />} />

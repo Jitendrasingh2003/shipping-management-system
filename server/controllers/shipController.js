@@ -1,5 +1,7 @@
 const Ship = require('../models/mongodb/Ship');
 const Crew = require('../models/mongodb/Crew');
+const Shipment = require('../models/mongodb/Shipment');
+const CargoLog = require('../models/mongodb/CargoLog');
 
 // GET all ships for this manager (or single ship for staff)
 exports.getShips = async (req, res, next) => {
@@ -73,5 +75,41 @@ exports.deleteShip = async (req, res, next) => {
     const ship = await Ship.findOneAndDelete({ _id: req.params.id, managerId: req.user.id });
     if (!ship) return res.status(404).json({ success: false, message: 'Ship not found' });
     res.json({ success: true, message: 'Ship deleted' });
+  } catch (err) { next(err); }
+};
+
+// GET cargo and shipments assigned to a ship's crew
+exports.getShipCargo = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Auth & authorization check
+    if (req.user.role === 'staff') {
+      const crew = await Crew.findOne({ userId: req.user.id });
+      if (!crew || crew.shipId.toString() !== id) {
+        return res.status(403).json({ success: false, message: 'Not authorized to view this ship cargo' });
+      }
+    } else if (req.user.role === 'manager') {
+      const ship = await Ship.findOne({ _id: id, managerId: req.user.id });
+      if (!ship) {
+        return res.status(404).json({ success: false, message: 'Ship not found or access denied' });
+      }
+    }
+
+    // 1. Find all crew associated with this ship
+    const crewList = await Crew.find({ shipId: id });
+    const userIds = crewList.map(c => c.userId).filter(uid => uid != null);
+
+    // 2. Fetch shipments assigned to this crew's user accounts
+    const shipments = await Shipment.find({ 'assignedTo.userId': { $in: userIds }, isArchived: false }).sort({ createdAt: -1 });
+
+    // 3. Fetch cargo logs for the ship
+    const cargoLogs = await CargoLog.find({ shipId: id }).sort({ logDate: -1 });
+
+    res.json({
+      success: true,
+      shipments,
+      cargoLogs
+    });
   } catch (err) { next(err); }
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { shipmentAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { MdClose, MdLocationOn } from 'react-icons/md';
@@ -23,13 +23,89 @@ export default function StatusUpdateModal({ shipment, onClose, onSuccess }) {
   const [receivedBy, setReceivedBy] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Canvas drawing ref & state
+  const canvasRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
   const nextStatuses = STATUS_FLOW[shipment.status] || [];
+
+  // Setup drawing context
+  useEffect(() => {
+    if (status === 'delivered' && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      ctx.strokeStyle = '#0f172a'; // Navy color stroke
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+  }, [status]);
+
+  const startDrawing = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    
+    // Support mouse & touch events
+    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+
+    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
 
   const handleSubmit = async () => {
     if (!status) return toast.error('Please select a status');
+    if (status === 'delivered' && !receivedBy.trim()) {
+      return toast.error('Please fill in the receiver name');
+    }
+    
     setLoading(true);
     try {
-      await shipmentAPI.updateStatus(shipment._id, { status, location, description, receivedBy });
+      let signatureData = '';
+      if (status === 'delivered' && canvasRef.current) {
+        signatureData = canvasRef.current.toDataURL(); // extract signature as base64 string
+      }
+
+      await shipmentAPI.updateStatus(shipment._id, {
+        status,
+        location,
+        description: description + (signatureData ? ' [Recipient Signed]' : ''),
+        receivedBy
+      });
       toast.success(`Status updated to ${status.replace(/_/g,' ')} ✅`);
       onSuccess();
     } catch (err) {
@@ -61,7 +137,7 @@ export default function StatusUpdateModal({ shipment, onClose, onSuccess }) {
               {shipment.trackingId}
             </div>
           </div>
-          <button className="modal-close" onClick={onClose}><MdClose /></button>
+          <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
         <div className="modal-body">
@@ -116,10 +192,34 @@ export default function StatusUpdateModal({ shipment, onClose, onSuccess }) {
               </div>
 
               {status === 'delivered' && (
-                <div className="form-group">
-                  <label className="form-label">Received By <span className="required">*</span></label>
-                  <input className="form-input" value={receivedBy} onChange={e => setReceivedBy(e.target.value)} placeholder="Name of person who received the package" />
-                </div>
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Received By <span className="required">*</span></label>
+                    <input className="form-input" value={receivedBy} onChange={e => setReceivedBy(e.target.value)} placeholder="Name of person who received the package" required />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Drawing Signature Proof <span className="required">*</span></label>
+                    <div style={{ border: '2px solid var(--border)', borderRadius: '12px', background: '#f8fafc', overflow: 'hidden' }}>
+                      <canvas
+                        ref={canvasRef}
+                        width={300}
+                        height={120}
+                        onMouseDown={startDrawing}
+                        onMouseMove={draw}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={startDrawing}
+                        onTouchMove={draw}
+                        onTouchEnd={stopDrawing}
+                        style={{ display: 'block', width: '100%', height: '120px', cursor: 'crosshair', touchAction: 'none' }}
+                      />
+                    </div>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={clearCanvas} style={{ marginTop: '8px', width: '100%' }}>
+                      🧹 Clear Drawing Signature
+                    </button>
+                  </div>
+                </>
               )}
             </>
           )}
@@ -129,7 +229,7 @@ export default function StatusUpdateModal({ shipment, onClose, onSuccess }) {
           <div className="modal-footer">
             <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
             <button className="btn btn-primary" onClick={handleSubmit} disabled={loading || !status}>
-              {loading ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Updating...</> : '✅ Update Status'}
+              {loading ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Updating...</> : 'Update Status'}
             </button>
           </div>
         )}

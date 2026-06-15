@@ -1,33 +1,64 @@
 {
-    "name":  "server",
-    "version":  "1.0.0",
-    "description":  "",
-    "main":  "index.js",
-    "scripts":  {
-                    "seed":      "node utils/seedUsers.js",
-                    "seed:full": "node utils/seedFullData.js",
-                    "dev":       "node --watch server.js",
-                    "start":     "node server.js"
-                },
-    "keywords":  [],
-    "author":  "",
-    "license":  "ISC",
-    "type":  "commonjs",
-    "dependencies":  {
-                         "bcryptjs":           "^3.0.3",
-                         "cors":               "^2.8.6",
-                         "csv-writer":         "^1.6.0",
-                         "dotenv":             "^17.4.2",
-                         "express":            "^5.2.1",
-                         "express-validator":  "^7.3.2",
-                         "helmet":             "^8.2.0",
-                         "jsonwebtoken":       "^9.0.3",
-                         "mongoose":           "^9.6.3",
-                         "morgan":             "^1.10.1",
-                         "multer":             "^2.1.1",
-                         "nodemailer":         "^8.0.10",
-                         "pdfkit":             "^0.18.0",
-                         "socket.io":          "^4.8.3",
-                         "uuid":               "^14.0.0"
-                     }
+    "name": "server",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "seed": "node utils/seedUsers.js",
+        "seed:full": "node utils/seedFullData.js",
+        "dev": "node --watch server.js",
+        "start": "node server.js",
+        "test": "jest --runInBand --forceExit --detectOpenHandles",
+        "test:coverage": "jest --runInBand --forceExit --detectOpenHandles --coverage"
+    },
+    "jest": {
+        "testEnvironment": "node",
+        "testTimeout": 30000,
+        "testMatch": [
+            "**/tests/**/*.test.js"
+        ],
+        "collectCoverageFrom": [
+            "controllers/**/*.js",
+            "middleware/**/*.js",
+            "models/**/*.js",
+            "routes/**/*.js",
+            "!**/node_modules/**"
+        ],
+        "coverageThreshold": {
+            "global": {
+                "branches": 50,
+                "functions": 50,
+                "lines": 50,
+                "statements": 50
+            }
+        }
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "cors": "^2.8.6",
+        "csv-writer": "^1.6.0",
+        "dotenv": "^17.4.2",
+        "express": "^5.2.1",
+        "express-rate-limit": "^8.5.2",
+        "express-validator": "^7.3.2",
+        "helmet": "^8.2.0",
+        "jsonwebtoken": "^9.0.3",
+        "mongoose": "^9.6.3",
+        "morgan": "^1.10.1",
+        "multer": "^2.1.1",
+        "mysql2": "^3.22.5",
+        "nodemailer": "^8.0.10",
+        "pdfkit": "^0.18.0",
+        "socket.io": "^4.8.3",
+        "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+        "@jest/globals": "^30.4.1",
+        "jest": "^30.4.2",
+        "supertest": "^7.2.2"
+    }
 }

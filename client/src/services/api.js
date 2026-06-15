@@ -129,6 +129,7 @@ export const shipAPI = {
   create:  (data) => api.post('/ships', data),
   update:  (id, data) => api.put(`/ships/${id}`, data),
   delete:  (id) => api.delete(`/ships/${id}`),
+  getCargo: (id) => api.get(`/ships/${id}/cargo`),
 };
 
 // Crew / Ship Staff

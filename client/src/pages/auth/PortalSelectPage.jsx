@@ -1,12 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { MdBusiness, MdDeliveryDining, MdSecurity, MdArrowForward } from 'react-icons/md';
 
 export default function PortalSelectPage() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Agar pehle se logged in hai toh seedha dashboard pe bhejo
+  // If already authenticated, redirect to appropriate panel
   useEffect(() => {
     if (isAuthenticated && user) {
       const routes = { admin: '/admin', manager: '/manager', staff: '/staff' };
@@ -14,45 +15,9 @@ export default function PortalSelectPage() {
     }
   }, [isAuthenticated, user, navigate]);
 
-  const portals = [
-    {
-      role: 'admin',
-      icon: '👑',
-      title: 'Admin Portal',
-      description: 'Full system access — Users, Reports, HR, Finance, Company Settings & more',
-      link: '/admin/login',
-      className: 'portal-card-admin',
-      badge: 'ADMIN',
-      features: ['User Management', 'Financial Reports', 'HR Management', 'Audit Logs', 'System Settings'],
-      color: '#dc2626',
-    },
-    {
-      role: 'manager',
-      icon: '🚢',
-      title: 'Company Portal',
-      description: 'Marine company management — Register & manage your fleet, voyages, shipments & crew',
-      link: '/manager/register',
-      className: 'portal-card-manager',
-      badge: 'COMPANY',
-      features: ['Fleet Management', 'Voyage Tracking', 'Crew Management', 'Ship Analytics', 'Record Books'],
-      color: '#d97706',
-    },
-    {
-      role: 'staff',
-      icon: '👷',
-      title: 'Staff Portal',
-      description: 'Marine staff operations — Track voyages, log record books, and report navigational data',
-      link: '/staff/login',
-      className: 'portal-card-staff',
-      badge: 'STAFF',
-      features: ['Voyage Tracking', 'Deck Log Book', 'Engine Log Book', 'Record Books Logging', 'Vessel Status'],
-      color: '#16a34a',
-    },
-  ];
-
   return (
     <div className="portal-select-page">
-      {/* Animated Background */}
+      {/* Background blobs & grids */}
       <div className="portal-bg">
         <div className="portal-blob portal-blob-1" />
         <div className="portal-blob portal-blob-2" />
@@ -61,63 +26,76 @@ export default function PortalSelectPage() {
       </div>
 
       <div className="portal-content">
-        {/* Header */}
-        <div className="portal-header slide-up">
+        {/* Floating Administrative Access Link */}
+        <div className="portal-admin-corner">
+          <Link to="/admin/login" className="portal-admin-link-badge">
+            <span className="admin-icon"><MdSecurity /></span>
+            Admin Console
+          </Link>
+        </div>
+
+        {/* Header Section */}
+        <div className="portal-header">
           <div className="portal-logo">
             <div className="portal-logo-icon">🚚</div>
           </div>
           <h1 className="portal-main-title">ShipTrack <span>Pro</span></h1>
           <p className="portal-main-subtitle">
-            Codec Technologies — Shipping Management System
+            Next-Generation Shipping, Marine Operations & Logistics Management Platform
           </p>
-          <p className="portal-choose-text">Apna portal chunein neeche se 👇</p>
+          <div className="portal-choose-text">
+            Choose your gateway to sign in to your workspace
+          </div>
         </div>
 
-        {/* Portal Cards */}
-        <div className="portal-cards">
-          {portals.map((portal, i) => (
-            <Link
-              key={portal.role}
-              to={portal.link}
-              className={`portal-card ${portal.className}`}
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              {/* Card glow effect */}
-              <div className="portal-card-glow" style={{ background: portal.color }} />
+        {/* Dual Cards Container */}
+        <div className="portal-cards-container">
+          {/* Card 1: Company Manager Portal */}
+          <div className="portal-select-card-premium" onClick={() => navigate('/manager/login')}>
+            <div className="card-shine" />
+            <div className="portal-card-icon-wrap company">
+              <MdBusiness size={40} />
+            </div>
+            <h2 className="portal-card-title">Corporate Portal</h2>
+            <p className="portal-card-desc">
+              Manage cargo vessels, staff assignments, invoices, voyaging logbooks, and full shipping statistics.
+            </p>
+            <ul className="portal-features-list">
+              <li><span className="dot" /> Fleet & Ship Diagnostics</li>
+              <li><span className="dot" /> Courier Dispatch Board</li>
+              <li><span className="dot" /> Logbooks & Auditing</li>
+            </ul>
+            <div className="portal-card-action">
+              <span>Enter Workspace</span>
+              <MdArrowForward className="arrow-icon" />
+            </div>
+          </div>
 
-              {/* Badge */}
-              <div className="portal-role-badge" style={{ borderColor: portal.color, color: portal.color }}>
-                {portal.badge}
-              </div>
-
-              {/* Icon */}
-              <div className="portal-card-icon">{portal.icon}</div>
-
-              {/* Content */}
-              <h2 className="portal-card-title">{portal.title}</h2>
-              <p className="portal-card-desc">{portal.description}</p>
-
-              {/* Features */}
-              <ul className="portal-features">
-                {portal.features.map(f => (
-                  <li key={f} className="portal-feature-item">
-                    <span className="portal-feature-dot" style={{ background: portal.color }} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA */}
-              <div className="portal-card-cta" style={{ background: portal.color }}>
-                Login as {portal.badge} →
-              </div>
-            </Link>
-          ))}
+          {/* Card 2: Staff Portal */}
+          <div className="portal-select-card-premium" onClick={() => navigate('/staff/login')}>
+            <div className="card-shine" />
+            <div className="portal-card-icon-wrap staff">
+              <MdDeliveryDining size={40} />
+            </div>
+            <h2 className="portal-card-title">Staff Portal</h2>
+            <p className="portal-card-desc">
+              Access active deliveries, capture signatures, scan package barcodes, and log vessel parameters.
+            </p>
+            <ul className="portal-features-list">
+              <li><span className="dot" /> My Deliveries & Map</li>
+              <li><span className="dot" /> Scanner & Signature Pad</li>
+              <li><span className="dot" /> Vessel Operations Logs</li>
+            </ul>
+            <div className="portal-card-action">
+              <span>Access Board</span>
+              <MdArrowForward className="arrow-icon" />
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
         <div className="portal-footer">
-          🔒 All portals are secured with JWT Authentication & bcrypt encryption
+          🔒 Secure SSL Connection • Authorized personnel only • Protected with JWT session tokens
         </div>
       </div>
     </div>

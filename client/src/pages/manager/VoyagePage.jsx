@@ -4,6 +4,113 @@ import { shipAPI, voyageAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
+function VoyageDetailModal({ voyage, onClose }) {
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    try {
+      return format(new Date(dateStr), 'dd-MM-yyyy');
+    } catch (err) {
+      return dateStr;
+    }
+  };
+
+  const getProgressPercent = (status) => {
+    if (status === 'Completed') return 100;
+    if (status === 'Running') return 50;
+    return 0;
+  };
+
+  return (
+    <div className="marine-modal-overlay" onClick={onClose}>
+      <div className="marine-modal marine-modal-lg" onClick={e => e.stopPropagation()}>
+        <div className="marine-modal-header">
+          <h3 className="marine-modal-title">🗺️ Voyage Details — No. {voyage.voyageNo}</h3>
+          <button onClick={onClose} className="marine-modal-close">✕</button>
+        </div>
+        <div className="marine-modal-body" style={{ color: '#0f172a' }}>
+          {/* General Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+              <strong style={{ color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Vessel Name</strong>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#dc2626' }}>{voyage.shipId?.name || '—'}</span>
+            </div>
+            <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+              <strong style={{ color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Voyage Number</strong>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{voyage.voyageNo}</span>
+            </div>
+            <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+              <strong style={{ color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Voyage Type</strong>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', textTransform: 'capitalize' }}>{voyage.voyageType}</span>
+            </div>
+            <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+              <strong style={{ color: '#64748b', fontSize: 11, display: 'block', textTransform: 'uppercase' }}>Logging Officer Role</strong>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', textTransform: 'uppercase' }}>{voyage.role}</span>
+            </div>
+          </div>
+
+          {/* Interactive Timeline Route */}
+          <div style={{ background: '#f8fafc', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+            <h4 style={{ fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 20 }}>Voyage Route & Progress</h4>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Departure & Arrival Names */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, fontWeight: 700, color: '#0f172a' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>📍 Port of Departure: <span style={{ color: '#2563eb' }}>{voyage.departurePort || '—'}</span></span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: '#16a34a' }}>{voyage.arrivalPort || '—'}</span> :Port of Arrival 🏁</span>
+              </div>
+              
+              {/* Timeline Graphic */}
+              <div style={{ height: 8, background: '#e2e8f0', borderRadius: 4, position: 'relative', margin: '20px 0' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${getProgressPercent(voyage.voyageStatus)}%`,
+                  background: 'linear-gradient(90deg, #2563eb, #16a34a)',
+                  borderRadius: 4,
+                  transition: 'width 0.6s ease'
+                }} />
+                
+                {/* Ship Indicator Icon */}
+                <span style={{
+                  position: 'absolute',
+                  left: `calc(${getProgressPercent(voyage.voyageStatus)}% - 16px)`,
+                  top: '-10px',
+                  fontSize: '20px',
+                  transition: 'left 0.6s ease',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))'
+                }}>🚢</span>
+              </div>
+
+              {/* ETD & ETA */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 500, color: '#64748b' }}>
+                <span>📅 Departure Date (ETD): <strong style={{ color: '#334155' }}>{formatDate(voyage.departureDate)}</strong></span>
+                <span>📅 Arrival Date (ETA): <strong style={{ color: '#334155' }}>{formatDate(voyage.arrivalDate)}</strong></span>
+              </div>
+
+              {/* Current Status Badge */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+                <span style={{
+                  padding: '6px 16px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: voyage.voyageStatus === 'Running' ? '#d97706' : voyage.voyageStatus === 'Completed' ? '#16a34a' : '#2563eb',
+                  background: (voyage.voyageStatus === 'Running' ? '#d97706' : voyage.voyageStatus === 'Completed' ? '#16a34a' : '#2563eb') + '15',
+                  border: `1px solid ${voyage.voyageStatus === 'Running' ? '#d97706' : voyage.voyageStatus === 'Completed' ? '#16a34a' : '#2563eb'}`
+                }}>
+                  Status: {voyage.voyageStatus} ({getProgressPercent(voyage.voyageStatus)}% Completed)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="marine-modal-footer">
+          <button onClick={onClose} className="marine-btn-sec">Close Details</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function VoyageModal({ voyage, ships, defaultShipId, onClose, onSave }) {
   const [form, setForm] = useState(voyage || {
     shipId: defaultShipId || ships[0]?._id || '', voyageNo: '', voyageType: 'laden',
@@ -95,6 +202,7 @@ export default function VoyagePage() {
   const [selectedShip, setSelectedShip] = useState('');
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [viewVoyage, setViewVoyage] = useState(null);
 
   useEffect(() => {
     shipAPI.getAll().then(r => {
@@ -136,7 +244,7 @@ export default function VoyagePage() {
         <h2 className="marine-page-title">Voyage List</h2>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="marine-btn-red" onClick={() => setModal('add')}>+ Add Voyage</button>
-          <button className="marine-btn-outline">Audit Trail</button>
+          <button className="marine-btn-outline" onClick={() => toast.info('Voyage changes are audited and recorded automatically.')}>Audit Trail</button>
         </div>
       </div>
 
@@ -163,14 +271,14 @@ export default function VoyagePage() {
               <tr key={v._id}>
                 <td>{i + 1}</td>
                 <td>{v.role}</td>
-                <td style={{ color: '#dc2626', fontWeight: 500 }}>{v.shipId?.name || '—'}</td>
+                <td style={{ color: '#dc2626', fontWeight: 500, cursor: 'pointer' }} onClick={() => setViewVoyage(v)}>{v.shipId?.name || '—'}</td>
                 <td>{v.voyageNo}</td>
                 <td>{v.voyageType}</td>
                 <td><span style={{ color: statusColor(v.voyageStatus), fontWeight: 600 }}>{v.voyageStatus}</span></td>
                 <td>{format(new Date(v.createdAt), 'dd-MM-yyyy')}</td>
                 <td>
                   <div className="marine-actions">
-                    <button className="marine-act-btn marine-act-view" title="View">👁</button>
+                    <button className="marine-act-btn marine-act-view" title="View" onClick={() => setViewVoyage(v)}>👁</button>
                     <button className="marine-act-btn marine-act-edit" title="Edit" onClick={() => setModal(v)}>✏️</button>
                     <button className="marine-act-btn marine-act-del" title="Delete" onClick={() => handleDelete(v._id)}>🗑</button>
                   </div>
@@ -196,9 +304,17 @@ export default function VoyagePage() {
           ships={ships}
           defaultShipId={selectedShip}
           onClose={() => setModal(null)}
-          onSave={() => { setModal(null); loadVoyages(); }}
+          onSave={() => { setModal(null); load_voyages ? load_voyages() : loadVoyages(); }}
+        />
+      )}
+
+      {viewVoyage && (
+        <VoyageDetailModal
+          voyage={viewVoyage}
+          onClose={() => setViewVoyage(null)}
         />
       )}
     </MarineLayout>
   );
 }
+

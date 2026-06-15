@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import VesselFABs from '../../components/layout/VesselFABs';
 import {
   MdDashboard, MdDirectionsBoat, MdPeople, MdBusiness,
   MdRoute, MdSettings, MdCompare, MdReport, MdBook,
@@ -114,11 +115,7 @@ export default function MarineLayout({ children, active }) {
         </div>
       </div>
 
-      {/* FABs */}
-      <div className="marine-fab-group">
-        <button className="marine-fab marine-fab-chat">💬</button>
-        <button className="marine-fab marine-fab-add"><MdAdd size={24} /></button>
-      </div>
+      <VesselFABs />
 
       {/* Company Profile Modal */}
       {showProfile && (

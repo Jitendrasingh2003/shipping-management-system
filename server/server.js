@@ -8,7 +8,9 @@ const morgan = require('morgan');
 const path = require('path');
 
 const connectMongoDB = require('./config/db.mongo');
+const { connectMySQL, initTables } = require('./config/db.mysql');
 const errorHandler = require('./middleware/errorHandler');
+const { generalLimiter } = require('./middleware/rateLimiter');
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -67,6 +69,7 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api', generalLimiter); // General rate limiter on all API routes
 
 // Create uploads dir if not exists
 const fs = require('fs');
@@ -115,6 +118,10 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   await connectMongoDB();
 
+  // MySQL — non-fatal (system works without it)
+  const mysqlPool = await connectMySQL();
+  if (mysqlPool) await initTables();
+
   server.listen(PORT, () => {
     console.log(`\n🚀 ShipTrack Pro Server running on port ${PORT}`);
     console.log(`📡 API: http://localhost:${PORT}/api`);
@@ -126,4 +133,9 @@ const startServer = async () => {
   });
 };
 
-startServer().catch(console.error);
+if (process.env.NODE_ENV !== 'test') {
+  startServer().catch(console.error);
+}
+
+module.exports = app;
+

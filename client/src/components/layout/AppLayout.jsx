@@ -1,5 +1,6 @@
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import VesselFABs from './VesselFABs';
 
 export default function AppLayout({ children, title, subtitle }) {
   return (
@@ -11,6 +12,8 @@ export default function AppLayout({ children, title, subtitle }) {
           {children}
         </div>
       </main>
+      <VesselFABs />
     </div>
   );
 }
+
